@@ -516,7 +516,7 @@ bool CManualMappedDll::execute_shellcode_in_target_process()
 	NTSTATUS st;
 	if (!NT_SUCCESS(st = NtCreateThreadEx(
 		&hThread, THREAD_ALL_ACCESS, nullptr,
-		m_target_process_handle, (LPTHREAD_START_ROUTINE)get_target_process_shellcode_addr(), 
+		m_target_process_handle, (PUSER_THREAD_START_ROUTINE)get_target_process_shellcode_addr(),
 		(PVOID)get_target_process_shellcode_execution_context_addr(),
 		NULL, 0, 0, 0, nullptr)) || !hThread)
 	{

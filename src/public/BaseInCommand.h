@@ -63,7 +63,7 @@ static std::unordered_map<EInCommandFlags, std::string> incommand_flags_to_str =
 
 template <>
 struct std::formatter<EInCommandFlags> : std::formatter<std::string> {
-	auto format(EInCommandFlags flags, std::format_context& ctx) {
+	auto format(EInCommandFlags flags, std::format_context& ctx) const {
 		if (flags == IN_FLAG_None)
 		{
 			return std::formatter<string>::format("none", ctx);

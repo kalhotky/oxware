@@ -40,7 +40,7 @@
 // CColor
 template <>
 struct std::formatter<CColor> : std::formatter<std::string> {
-	auto format(const CColor& clr, std::format_context& ctx) {
+	auto format(const CColor& clr, std::format_context& ctx) const {
 		return std::formatter<string>::format(
 		  std::format("[r: {:.3f} g: {:.3f} b: {:.3f} a: {:.3f}]", clr.r, clr.g, clr.b, clr.a), ctx);
 	}
@@ -49,7 +49,7 @@ struct std::formatter<CColor> : std::formatter<std::string> {
 // Vector
 template <>
 struct std::formatter<Vector> : std::formatter<std::string> {
-	auto format(const Vector& vec, std::format_context& ctx) {
+	auto format(const Vector& vec, std::format_context& ctx) const {
 		return std::formatter<string>::format(
 		  std::format("[x: {:.3f} y: {:.3f} z: {:.3f}]", vec.x, vec.y, vec.z), ctx);
 	}
@@ -58,7 +58,7 @@ struct std::formatter<Vector> : std::formatter<std::string> {
 // Vector2D
 template <>
 struct std::formatter<Vector2D> : std::formatter<std::string> {
-	auto format(const Vector2D& vec, std::format_context& ctx) {
+	auto format(const Vector2D& vec, std::format_context& ctx) const {
 		return std::formatter<string>::format(
 		  std::format("[x: {:.3f} y: {:.3f}]", vec.x, vec.y), ctx);
 	}
@@ -67,7 +67,7 @@ struct std::formatter<Vector2D> : std::formatter<std::string> {
 // KeyValue
 template <>
 struct std::formatter<KeyValue> : std::formatter<std::string> {
-	auto format(const KeyValue& kv, std::format_context& ctx) {
+	auto format(const KeyValue& kv, std::format_context& ctx) const {
 		return std::formatter<string>::format(
 		  std::format("[{}: {}]", kv.key(), kv.value()), ctx);
 	}
@@ -76,7 +76,7 @@ struct std::formatter<KeyValue> : std::formatter<std::string> {
 // std::filesystem::path
 template <>
 struct std::formatter<std::filesystem::path> : std::formatter<std::string> {
-	auto format(const std::filesystem::path& p, std::format_context& ctx) {
+	auto format(const std::filesystem::path& p, std::format_context& ctx) const {
 		return std::formatter<string>::format(
 		  std::format("{}", p.string()), ctx);
 	}

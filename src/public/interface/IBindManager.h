@@ -48,7 +48,7 @@ static const char* bind_type_to_str[] =
 
 template <>
 struct std::formatter<EBindType> : std::formatter<std::string> {
-	auto format(EBindType type, std::format_context& ctx) {
+	auto format(EBindType type, std::format_context& ctx) const {
 
 		switch (type)
 		{
@@ -89,7 +89,7 @@ static std::unordered_map<EBindFlags, std::string> bind_flags_to_str
 
 template <>
 struct std::formatter<EBindFlags> : std::formatter<std::string> {
-	auto format(EBindFlags flags, std::format_context& ctx) {
+	auto format(EBindFlags flags, std::format_context& ctx) const {
 		if (flags == BINDFLAG_None)
 		{
 			return std::formatter<string>::format("none", ctx);
