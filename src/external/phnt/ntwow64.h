@@ -1,16 +1,15 @@
 /*
- * This file is part of the Process Hacker project - https://processhacker.sourceforge.io/
+ * Windows on Windows support functions
  *
- * You can redistribute this file and/or modify it under the terms of the 
- * Attribution 4.0 International (CC BY 4.0) license. 
- * 
- * You must give appropriate credit, provide a link to the license, and 
- * indicate if changes were made. You may do so in any reasonable manner, but 
- * not in any way that suggests the licensor endorses you or your use.
+ * This file is part of System Informer.
  */
 
 #ifndef _NTWOW64_H
 #define _NTWOW64_H
+
+#if (PHNT_MODE != PHNT_MODE_KERNEL)
+#include <ntxcapi.h>
+#endif
 
 #define WOW64_SYSTEM_DIRECTORY "SysWOW64"
 #define WOW64_SYSTEM_DIRECTORY_U L"SysWOW64"
@@ -108,6 +107,8 @@ typedef struct _LDR_DDAG_NODE32
 #define LDR_DATA_TABLE_ENTRY_SIZE_WINXP_32 FIELD_OFFSET(LDR_DATA_TABLE_ENTRY32, DdagNode)
 #define LDR_DATA_TABLE_ENTRY_SIZE_WIN7_32 FIELD_OFFSET(LDR_DATA_TABLE_ENTRY32, BaseNameHashValue)
 #define LDR_DATA_TABLE_ENTRY_SIZE_WIN8_32 FIELD_OFFSET(LDR_DATA_TABLE_ENTRY32, ImplicitPathOptions)
+#define LDR_DATA_TABLE_ENTRY_SIZE_WIN10_32 FIELD_OFFSET(LDR_DATA_TABLE_ENTRY32, SigningLevel)
+#define LDR_DATA_TABLE_ENTRY_SIZE_WIN11_32 sizeof(LDR_DATA_TABLE_ENTRY32)
 
 typedef struct _LDR_DATA_TABLE_ENTRY32
 {
@@ -180,6 +181,9 @@ typedef struct _LDR_DATA_TABLE_ENTRY32
     ULONG ReferenceCount;
     ULONG DependentLoadFlags;
     UCHAR SigningLevel; // since REDSTONE2
+    ULONG CheckSum; // since 22H1
+    WOW64_POINTER(PVOID) ActivePatchImageBase;
+    LDR_HOT_PATCH_STATE HotPatchState;
 } LDR_DATA_TABLE_ENTRY32, *PLDR_DATA_TABLE_ENTRY32;
 
 typedef struct _CURDIR32
@@ -240,9 +244,12 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS32
 
     UNICODE_STRING32 RedirectionDllName; // REDSTONE4
     UNICODE_STRING32 HeapPartitionName; // 19H1
-    WOW64_POINTER(ULONG_PTR) DefaultThreadpoolCpuSetMasks;
+    WOW64_POINTER(ULONGLONG) DefaultThreadpoolCpuSetMasks;
     ULONG DefaultThreadpoolCpuSetMaskCount;
+    ULONG DefaultThreadpoolThreadMaximum;
 } RTL_USER_PROCESS_PARAMETERS32, *PRTL_USER_PROCESS_PARAMETERS32;
+
+typedef struct _LEAP_SECOND_DATA *PLEAP_SECOND_DATA;
 
 typedef struct _PEB32
 {
@@ -299,7 +306,7 @@ typedef struct _PEB32
     WOW64_POINTER(PVOID) TlsBitmap;
     ULONG TlsBitmapBits[2];
     WOW64_POINTER(PVOID) ReadOnlySharedMemoryBase;
-    WOW64_POINTER(PVOID) HotpatchInformation;
+    WOW64_POINTER(PVOID) SharedData;
     WOW64_POINTER(PVOID *) ReadOnlyStaticServerData;
     WOW64_POINTER(PVOID) AnsiCodePageData;
     WOW64_POINTER(PVOID) OemCodePageData;
@@ -348,24 +355,35 @@ typedef struct _PEB32
 
     UNICODE_STRING32 CSDVersion;
 
-    WOW64_POINTER(PVOID) ActivationContextData;
+    WOW64_POINTER(PACTIVATION_CONTEXT_DATA) ActivationContextData;
     WOW64_POINTER(PVOID) ProcessAssemblyStorageMap;
-    WOW64_POINTER(PVOID) SystemDefaultActivationContextData;
+    WOW64_POINTER(PACTIVATION_CONTEXT_DATA) SystemDefaultActivationContextData;
     WOW64_POINTER(PVOID) SystemAssemblyStorageMap;
 
     WOW64_POINTER(SIZE_T) MinimumStackCommit;
 
-    WOW64_POINTER(PVOID) SparePointers[4];
-    ULONG SpareUlongs[5];
-    //WOW64_POINTER(PVOID *) FlsCallback;
-    //LIST_ENTRY32 FlsListHead;
-    //WOW64_POINTER(PVOID) FlsBitmap;
-    //ULONG FlsBitmapBits[FLS_MAXIMUM_AVAILABLE / (sizeof(ULONG) * 8)];
-    //ULONG FlsHighIndex;
+    WOW64_POINTER(PVOID) SparePointers[2]; // 19H1 (previously FlsCallback to FlsHighIndex)
+    WOW64_POINTER(PVOID) PatchLoaderData;
+    WOW64_POINTER(PVOID) ChpeV2ProcessInfo; // _CHPEV2_PROCESS_INFO
+
+    ULONG AppModelFeatureState;
+    ULONG SpareUlongs[2];
+
+    USHORT ActiveCodePage;
+    USHORT OemCodePage;
+    USHORT UseCaseMapping;
+    USHORT UnusedNlsField;
 
     WOW64_POINTER(PVOID) WerRegistrationData;
     WOW64_POINTER(PVOID) WerShipAssertPtr;
-    WOW64_POINTER(PVOID) pContextData;
+
+    union
+    {
+        WOW64_POINTER(PVOID) pContextData; // WIN7
+        WOW64_POINTER(PVOID) pUnused; // WIN10
+        WOW64_POINTER(PVOID) EcCodeBitMap; // WIN11
+    };
+
     WOW64_POINTER(PVOID) pImageHeaderHash;
     union
     {
@@ -387,18 +405,27 @@ typedef struct _PEB32
     ULONG CloudFileDiagFlags; // REDSTONE4
     CHAR PlaceholderCompatibilityMode;
     CHAR PlaceholderCompatibilityModeReserved[7];
+    WOW64_POINTER(PLEAP_SECOND_DATA) LeapSecondData; // REDSTONE5
+    union
+    {
+        ULONG LeapSecondFlags;
+        struct
+        {
+            ULONG SixtySecondEnabled : 1;
+            ULONG Reserved : 31;
+        };
+    };
+    ULONG NtGlobalFlag2;
+    ULONGLONG ExtendedFeatureDisableMask; // since WIN11
 } PEB32, *PPEB32;
 
-C_ASSERT(FIELD_OFFSET(PEB32, IFEOKey) == 0x024);
-C_ASSERT(FIELD_OFFSET(PEB32, UnicodeCaseTableData) == 0x060);
-C_ASSERT(FIELD_OFFSET(PEB32, SystemAssemblyStorageMap) == 0x204);
-C_ASSERT(FIELD_OFFSET(PEB32, pImageHeaderHash) == 0x23c);
-C_ASSERT(FIELD_OFFSET(PEB32, WaitOnAddressHashTable) == 0x25c);
-//C_ASSERT(sizeof(PEB32) == 0x460); // REDSTONE3
-C_ASSERT(sizeof(PEB32) == 0x470);
+//static_assert(sizeof(PEB32) == 0x460, "sizeof(PEB32) is incorrect"); // REDSTONE3
+//static_assert(sizeof(PEB32) == 0x470, "sizeof(PEB32) is incorrect"); // REDSTONE5
+static_assert(sizeof(PEB32) == 0x488, "sizeof(PEB32) is incorrect"); // WIN11
 
 // Note: Use PhGetProcessPeb32 instead. (dmex)
-//#define WOW64_GET_PEB32(peb64) ((PPEB32)PTR_ADD_OFFSET((peb64), ALIGN_UP_BY(sizeof(PEB), PAGE_SIZE)))
+//#define WOW64_GET_PEB32(peb64) \
+//    ((PPEB32)RtlOffsetToPointer((peb64), ALIGN_UP_BY(sizeof(PEB), PAGE_SIZE)))
 
 #define GDI_BATCH_BUFFER_SIZE 310
 
@@ -555,26 +582,15 @@ typedef struct _TEB32
     GUID EffectiveContainerId;
 } TEB32, *PTEB32;
 
-C_ASSERT(FIELD_OFFSET(TEB32, ProcessEnvironmentBlock) == 0x030);
-C_ASSERT(FIELD_OFFSET(TEB32, ExceptionCode) == 0x1a4);
-C_ASSERT(FIELD_OFFSET(TEB32, TxFsContext) == 0x1d0);
-C_ASSERT(FIELD_OFFSET(TEB32, glContext) == 0xbf0);
-C_ASSERT(FIELD_OFFSET(TEB32, StaticUnicodeBuffer) == 0xc00);
-C_ASSERT(FIELD_OFFSET(TEB32, TlsLinks) == 0xf10);
-C_ASSERT(FIELD_OFFSET(TEB32, DbgSsReserved) == 0xf20);
-C_ASSERT(FIELD_OFFSET(TEB32, ActivityId) == 0xf50);
-C_ASSERT(FIELD_OFFSET(TEB32, GdiBatchCount) == 0xf70);
-C_ASSERT(FIELD_OFFSET(TEB32, TlsExpansionSlots) == 0xf94);
-C_ASSERT(FIELD_OFFSET(TEB32, FlsData) == 0xfb4);
-C_ASSERT(FIELD_OFFSET(TEB32, MuiImpersonation) == 0xfc4);
-C_ASSERT(FIELD_OFFSET(TEB32, ReservedForCrt) == 0xfe8);
-C_ASSERT(FIELD_OFFSET(TEB32, EffectiveContainerId) == 0xff0);
-C_ASSERT(sizeof(TEB32) == 0x1000);
-
-// Get the 32-bit TEB without doing a memory reference
-// modified from public SDK /10.0.10240.0/um/minwin/wow64t.h (dmex)
-#define WOW64_GET_TEB32(teb64) ((PTEB32)PTR_ADD_OFFSET((teb64), ALIGN_UP_BY(sizeof(TEB), PAGE_SIZE)))
-#define WOW64_TEB32_POINTER_ADDRESS(teb64) (PVOID)&((teb64)->NtTib.ExceptionList)
+static_assert(FIELD_OFFSET(TEB32, ProcessEnvironmentBlock) == 0x030, "FIELD_OFFSET(TEB32, ProcessEnvironmentBlock) is incorrect");
+static_assert(FIELD_OFFSET(TEB32, ExceptionCode) == 0x1a4, "FIELD_OFFSET(TEB32, ExceptionCode) is incorrect");
+static_assert(FIELD_OFFSET(TEB32, StaticUnicodeBuffer) == 0xc00, "FIELD_OFFSET(TEB32, StaticUnicodeBuffer) is incorrect");
+static_assert(FIELD_OFFSET(TEB32, TlsLinks) == 0xf10, "FIELD_OFFSET(TEB32, TlsLinks) is incorrect");
+static_assert(FIELD_OFFSET(TEB32, TlsExpansionSlots) == 0xf94, "FIELD_OFFSET(TEB32, TlsExpansionSlots) is incorrect");
+static_assert(FIELD_OFFSET(TEB32, FlsData) == 0xfb4, "FIELD_OFFSET(TEB32, FlsData) is incorrect");
+static_assert(FIELD_OFFSET(TEB32, MuiImpersonation) == 0xfc4, "FIELD_OFFSET(TEB32, MuiImpersonation) is incorrect");
+static_assert(FIELD_OFFSET(TEB32, EffectiveContainerId) == 0xff0, "FIELD_OFFSET(TEB32, EffectiveContainerId) is incorrect");
+static_assert(sizeof(TEB32) == 0x1000, "sizeof(TEB32) is incorrect");
 
 // Conversion
 
@@ -597,5 +613,177 @@ FORCEINLINE VOID UStrToUStr32(
     Destination->MaximumLength = Source->MaximumLength;
     Destination->Buffer = PtrToUlong(Source->Buffer);
 }
+
+// The Wow64Info structure follows the PEB32/TEB32 structures and is shared between 32-bit and 64-bit modules inside a Wow64 process.
+// from SDK/10.0.10240.0/um/minwin/wow64t.h (dmex)
+//
+// Page size on x86 NT
+//
+#define PAGE_SIZE_X86NT 0x1000
+#define PAGE_SHIFT_X86NT 12L
+#define WOW64_SPLITS_PER_PAGE (PAGE_SIZE_X86NT / PAGE_SIZE_X86NT)
+
+//
+// Convert the number of native pages to sub x86-pages
+//
+#define Wow64GetNumberOfX86Pages(NativePages) \
+    ((NativePages) * (PAGE_SIZE_X86NT >> PAGE_SHIFT_X86NT))
+
+//
+// Macro to round to the nearest page size
+//
+#define WOW64_ROUND_TO_PAGES(Size) \
+    (((ULONG_PTR)(Size) + PAGE_SIZE_X86NT - 1) & ~(PAGE_SIZE_X86NT - 1))
+
+//
+// Get number of native pages
+//
+#define WOW64_BYTES_TO_PAGES(Size) \
+    (((ULONG)(Size) >> WOW64_ROUND_TO_PAGES) + (((ULONG)(Size) & (PAGE_SIZE_X86NT - 1)) != 0))
+
+//
+// Get the 32-bit TEB without doing a memory reference.
+//
+#define WOW64_GET_TEB32(teb64) ((PTEB32)(((ULONG_PTR)(teb64)) + ((ULONG_PTR)WOW64_ROUND_TO_PAGES(sizeof(TEB)))))
+#define WOW64_TEB32_POINTER_ADDRESS(teb64) ((PVOID)&(((PTEB)(teb64))->NtTib.ExceptionList))
+
+//
+// Get the 32-bit execute options.
+//
+typedef union _WOW64_EXECUTE_OPTIONS
+{
+    ULONG Flags;
+    struct
+    {
+        ULONG StackReserveSize : 8;
+        ULONG StackCommitSize : 4;
+        ULONG Deprecated0 : 1;
+        ULONG DisableWowAssert : 1;
+        ULONG DisableTurboDispatch : 1;
+        ULONG Unused : 13;
+        ULONG Reserved0 : 1;
+        ULONG Reserved1 : 1;
+        ULONG Reserved2 : 1;
+        ULONG Reserved3 : 1;
+    };
+} WOW64_EXECUTE_OPTIONS, *PWOW64_EXECUTE_OPTIONS;
+
+#define WOW64_CPUFLAGS_MSFT64           0x00000001
+#define WOW64_CPUFLAGS_SOFTWARE         0x00000002
+#define WOW64_CPUFLAGS_IA64             0x00000004
+
+typedef struct _WOW64INFO
+{
+    ULONG NativeSystemPageSize;
+    ULONG CpuFlags;
+    WOW64_EXECUTE_OPTIONS Wow64ExecuteFlags;
+    ULONG InstrumentationCallback;
+} WOW64INFO, *PWOW64INFO;
+
+typedef struct _PEB32_WITH_WOW64INFO
+{
+    PEB32 Peb32;
+    WOW64INFO Wow64Info;
+} PEB32_WITH_WOW64INFO, *PPEB32_WITH_WOW64INFO;
+
+#if (PHNT_MODE != PHNT_MODE_KERNEL)
+#ifdef _M_X64
+
+FORCEINLINE
+TEB32*
+POINTER_UNSIGNED
+Wow64CurrentGuestTeb(
+    VOID
+    )
+{
+    TEB* POINTER_UNSIGNED Teb;
+    TEB32* POINTER_UNSIGNED Teb32;
+
+    Teb = NtCurrentTeb();
+
+    if (Teb->WowTebOffset == 0)
+    {
+        //
+        // Not running under or over WoW, so there is no "guest teb"
+        //
+
+        return NULL;
+    }
+
+    if (Teb->WowTebOffset < 0)
+    {
+        //
+        // Was called while running under WoW. The current teb is the guest teb.
+        //
+
+        Teb32 = (PTEB32)Teb;
+
+#if defined(RTL_ASSERT)
+        RTL_ASSERT(&Teb32->WowTebOffset == &Teb->WowTebOffset);
+#endif
+    }
+    else
+    {
+        //
+        // Called by the WoW Host, so calculate the position of the guest teb
+        // relative to the current (host) teb.
+        //
+
+        Teb32 = (PTEB32)RtlOffsetToPointer(Teb, Teb->WowTebOffset);
+    }
+
+#if defined(RTL_ASSERT)
+    RTL_ASSERT(Teb32->NtTib.Self == PtrToUlong(Teb32));
+#endif
+
+    return Teb32;
+}
+
+FORCEINLINE
+VOID*
+POINTER_UNSIGNED
+Wow64CurrentNativeTeb(
+    VOID
+    )
+{
+    TEB* POINTER_UNSIGNED Teb;
+    VOID* POINTER_UNSIGNED HostTeb;
+
+    Teb = NtCurrentTeb();
+
+    if (Teb->WowTebOffset >= 0)
+    {
+        //
+        // Not running under WoW, so it it either not running on WoW at all, or
+        // it is the host. Return the current teb as native teb.
+        //
+
+        HostTeb = (PVOID)Teb;
+    }
+    else
+    {
+        //
+        // Called while running under WoW Host, so calculate the position of the
+        // host teb relative to the current (guest) teb.
+        //
+
+        HostTeb = (PVOID)RtlOffsetToPointer(Teb, Teb->WowTebOffset);
+    }
+
+#if defined(RTL_ASSERT)
+    RTL_ASSERT((((PTEB32)HostTeb)->NtTib.Self == PtrToUlong(HostTeb)) || ((ULONG_PTR)((PTEB)HostTeb)->NtTib.Self == (ULONG_PTR)HostTeb));
+#endif
+
+    return HostTeb;
+}
+
+#define NtCurrentTeb32() (Wow64CurrentGuestTeb())
+#define NtCurrentPeb32()  ((PPEB32)(UlongToPtr((NtCurrentTeb32()->ProcessEnvironmentBlock))))
+
+#define Wow64GetNativeTebField(teb, field) (((ULONG)(teb) == ((PTEB32)(teb))->NtTib.Self) ? (((PTEB32)(teb))->##field) : (((PTEB)(teb))->##field) )
+#define Wow64SetNativeTebField(teb, field, value) { if ((ULONG)(teb) == ((PTEB32)(teb))->NtTib.Self) {(((PTEB32)(teb))->##field) = (value);} else {(((PTEB)(teb))->##field) = (value);} }
+
+#endif // _M_X64
+#endif // (PHNT_MODE != PHNT_MODE_KERNEL)
 
 #endif

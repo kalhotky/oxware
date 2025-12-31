@@ -1,12 +1,7 @@
 /*
- * This file is part of the Process Hacker project - https://processhacker.sourceforge.io/
+ * Thread Pool support functions
  *
- * You can redistribute this file and/or modify it under the terms of the 
- * Attribution 4.0 International (CC BY 4.0) license. 
- * 
- * You must give appropriate credit, provide a link to the license, and 
- * indicate if changes were made. You may do so in any reasonable manner, but 
- * not in any way that suggests the licensor endorses you or your use.
+ * This file is part of System Informer.
  */
 
 #ifndef _NTTP_H
@@ -31,10 +26,9 @@ typedef VOID (NTAPI *PTP_ALPC_CALLBACK_EX)(
     _In_ PVOID ApcContext
     );
 
-#if (PHNT_VERSION >= PHNT_VISTA)
+#if (PHNT_VERSION >= PHNT_WINDOWS_VISTA)
 
-// private
-_Check_return_
+// winbase:CreateThreadpool
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -60,7 +54,7 @@ TpSetPoolMaxThreads(
     _In_ ULONG MaxThreads
     );
 
-// private
+// winbase:SetThreadpoolThreadMinimum
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -69,8 +63,8 @@ TpSetPoolMinThreads(
     _In_ ULONG MinThreads
     );
 
-#if (PHNT_VERSION >= PHNT_WIN7)
-// rev
+#if (PHNT_VERSION >= PHNT_WINDOWS_7)
+// winbase:QueryThreadpoolStackInformation
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -78,10 +72,8 @@ TpQueryPoolStackInformation(
     _In_ PTP_POOL Pool,
     _Out_ PTP_POOL_STACK_INFORMATION PoolStackInformation
     );
-#endif
 
-#if (PHNT_VERSION >= PHNT_WIN7)
-// rev
+// winbase:SetThreadpoolStackInformation
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -89,10 +81,18 @@ TpSetPoolStackInformation(
     _Inout_ PTP_POOL Pool,
     _In_ PTP_POOL_STACK_INFORMATION PoolStackInformation
     );
+
+// rev
+NTSYSAPI
+NTSTATUS
+NTAPI
+TpSetPoolThreadBasePriority(
+    _Inout_ PTP_POOL Pool,
+    _In_ ULONG BasePriority
+    );
 #endif
 
-// private
-_Check_return_
+// winbase:CreateThreadpoolCleanupGroup
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -181,7 +181,6 @@ TpDisassociateCallback(
     );
 
 // winbase:TrySubmitThreadpoolCallback
-_Check_return_
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -191,8 +190,7 @@ TpSimpleTryPost(
     _In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron
     );
 
-// private
-_Check_return_
+// winbase:CreateThreadpoolWork
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -228,8 +226,7 @@ TpWaitForWork(
     _In_ LOGICAL CancelPendingCallbacks
     );
 
-// private
-_Check_return_
+// winbase:CreateThreadpoolTimer
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -259,7 +256,7 @@ TpSetTimer(
     _In_opt_ ULONG WindowLength
     );
 
-#if (PHNT_VERSION >= PHNT_WIN8)
+#if (PHNT_VERSION >= PHNT_WINDOWS_8)
 // winbase:SetThreadpoolTimerEx
 NTSYSAPI
 NTSTATUS
@@ -289,8 +286,7 @@ TpWaitForTimer(
     _In_ LOGICAL CancelPendingCallbacks
     );
 
-// private
-_Check_return_
+// winbase:CreateThreadpoolWait
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -319,7 +315,7 @@ TpSetWait(
     _In_opt_ PLARGE_INTEGER Timeout
     );
 
-#if (PHNT_VERSION >= PHNT_WIN8)
+#if (PHNT_VERSION >= PHNT_WINDOWS_8)
 // winbase:SetThreadpoolWaitEx
 NTSYSAPI
 NTSTATUS
@@ -350,8 +346,7 @@ typedef VOID (NTAPI *PTP_IO_CALLBACK)(
     _In_ PTP_IO Io
     );
 
-// private
-_Check_return_
+// winbase:CreateThreadpoolIo
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -408,7 +403,7 @@ TpAllocAlpcCompletion(
     _In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron
     );
 
-#if (PHNT_VERSION >= PHNT_WIN7)
+#if (PHNT_VERSION >= PHNT_WINDOWS_7)
 // rev
 NTSYSAPI
 NTSTATUS
@@ -435,6 +430,22 @@ NTSYSAPI
 VOID
 NTAPI
 TpWaitForAlpcCompletion(
+    _Inout_ PTP_ALPC Alpc
+    );
+
+// rev
+NTSYSAPI
+VOID
+NTAPI
+TpAlpcRegisterCompletionList(
+    _Inout_ PTP_ALPC Alpc
+    );
+
+// rev
+NTSYSAPI
+VOID
+NTAPI
+TpAlpcUnregisterCompletionList(
     _Inout_ PTP_ALPC Alpc
     );
 

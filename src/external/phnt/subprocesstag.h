@@ -1,12 +1,7 @@
 /*
- * This file is part of the Process Hacker project - https://processhacker.sourceforge.io/
+ * Subprocess tag information
  *
- * You can redistribute this file and/or modify it under the terms of the 
- * Attribution 4.0 International (CC BY 4.0) license. 
- * 
- * You must give appropriate credit, provide a link to the license, and 
- * indicate if changes were made. You may do so in any reasonable manner, but 
- * not in any way that suggests the licensor endorses you or your use.
+ * This file is part of System Informer.
  */
 
 #ifndef _SUBPROCESSTAG_H
@@ -28,14 +23,14 @@ typedef enum _TAG_TYPE
 
 typedef struct _TAG_INFO_NAME_FROM_TAG_IN_PARAMS
 {
-    ULONG dwPid;
-    ULONG dwTag;
+    ULONG ProcessId;
+    ULONG ServiceTag;
 } TAG_INFO_NAME_FROM_TAG_IN_PARAMS, *PTAG_INFO_NAME_FROM_TAG_IN_PARAMS;
 
 typedef struct _TAG_INFO_NAME_FROM_TAG_OUT_PARAMS
 {
-    ULONG eTagType;
-    PWSTR pszName;
+    ULONG TagType;
+    PCWSTR Name;
 } TAG_INFO_NAME_FROM_TAG_OUT_PARAMS, *PTAG_INFO_NAME_FROM_TAG_OUT_PARAMS;
 
 typedef struct _TAG_INFO_NAME_FROM_TAG
@@ -46,14 +41,14 @@ typedef struct _TAG_INFO_NAME_FROM_TAG
 
 typedef struct _TAG_INFO_NAMES_REFERENCING_MODULE_IN_PARAMS
 {
-    ULONG dwPid;
-    PWSTR pszModule;
+    ULONG ProcessId;
+    PCWSTR ModuleName;
 } TAG_INFO_NAMES_REFERENCING_MODULE_IN_PARAMS, *PTAG_INFO_NAMES_REFERENCING_MODULE_IN_PARAMS;
 
 typedef struct _TAG_INFO_NAMES_REFERENCING_MODULE_OUT_PARAMS
 {
-    ULONG eTagType;
-    PWSTR pmszNames;
+    ULONG TagType;
+    PCWSTR Names;
 } TAG_INFO_NAMES_REFERENCING_MODULE_OUT_PARAMS, *PTAG_INFO_NAMES_REFERENCING_MODULE_OUT_PARAMS;
 
 typedef struct _TAG_INFO_NAMES_REFERENCING_MODULE
@@ -64,21 +59,21 @@ typedef struct _TAG_INFO_NAMES_REFERENCING_MODULE
 
 typedef struct _TAG_INFO_NAME_TAG_MAPPING_IN_PARAMS
 {
-    ULONG dwPid;
+    ULONG ProcessId;
 } TAG_INFO_NAME_TAG_MAPPING_IN_PARAMS, *PTAG_INFO_NAME_TAG_MAPPING_IN_PARAMS;
 
 typedef struct _TAG_INFO_NAME_TAG_MAPPING_ELEMENT
 {
-    ULONG eTagType;
-    ULONG dwTag;
-    PWSTR pszName;
-    PWSTR pszGroupName;
+    ULONG TagType;
+    ULONG Tag;
+    PCWSTR Name;
+    PCWSTR GroupName;
 } TAG_INFO_NAME_TAG_MAPPING_ELEMENT, *PTAG_INFO_NAME_TAG_MAPPING_ELEMENT;
 
 typedef struct _TAG_INFO_NAME_TAG_MAPPING_OUT_PARAMS
 {
-    ULONG cElements;
-    PTAG_INFO_NAME_TAG_MAPPING_ELEMENT pNameTagMappingElements;
+    ULONG Count;
+    PTAG_INFO_NAME_TAG_MAPPING_ELEMENT NameTagMappingElements;
 } TAG_INFO_NAME_TAG_MAPPING_OUT_PARAMS, *PTAG_INFO_NAME_TAG_MAPPING_OUT_PARAMS;
 
 typedef struct _TAG_INFO_NAME_TAG_MAPPING
@@ -88,18 +83,21 @@ typedef struct _TAG_INFO_NAME_TAG_MAPPING
 } TAG_INFO_NAME_TAG_MAPPING, *PTAG_INFO_NAME_TAG_MAPPING;
 
 _Must_inspect_result_
+NTSYSAPI
 ULONG
-WINAPI
+NTAPI
 I_QueryTagInformation(
     _In_opt_ PCWSTR MachineName,
     _In_ TAG_INFO_LEVEL InfoLevel,
     _Inout_ PVOID TagInfo
     );
 
-typedef ULONG (WINAPI *PQUERY_TAG_INFORMATION)(
+typedef _Function_class_(QUERY_TAG_INFORMATION)
+ULONG NTAPI QUERY_TAG_INFORMATION(
     _In_opt_ PCWSTR MachineName,
     _In_ TAG_INFO_LEVEL InfoLevel,
     _Inout_ PVOID TagInfo
     );
+typedef QUERY_TAG_INFORMATION *PQUERY_TAG_INFORMATION;
 
 #endif

@@ -1,12 +1,7 @@
 /*
- * This file is part of the Process Hacker project - https://processhacker.sourceforge.io/
+ * Object Manager support functions
  *
- * You can redistribute this file and/or modify it under the terms of the 
- * Attribution 4.0 International (CC BY 4.0) license. 
- * 
- * You must give appropriate credit, provide a link to the license, and 
- * indicate if changes were made. You may do so in any reasonable manner, but 
- * not in any way that suggests the licensor endorses you or your use.
+ * This file is part of System Informer.
  */
 
 #ifndef _NTOBAPI_H
@@ -14,7 +9,7 @@
 
 #if (PHNT_MODE != PHNT_MODE_KERNEL)
 #define OBJECT_TYPE_CREATE 0x0001
-#define OBJECT_TYPE_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | 0x1)
+#define OBJECT_TYPE_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | OBJECT_TYPE_CREATE)
 #endif
 
 #if (PHNT_MODE != PHNT_MODE_KERNEL)
@@ -22,14 +17,14 @@
 #define DIRECTORY_TRAVERSE 0x0002
 #define DIRECTORY_CREATE_OBJECT 0x0004
 #define DIRECTORY_CREATE_SUBDIRECTORY 0x0008
-#define DIRECTORY_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | 0xf)
+#define DIRECTORY_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | DIRECTORY_QUERY | DIRECTORY_TRAVERSE | DIRECTORY_CREATE_OBJECT | DIRECTORY_CREATE_SUBDIRECTORY)
 #endif
 
 #if (PHNT_MODE != PHNT_MODE_KERNEL)
 #define SYMBOLIC_LINK_QUERY 0x0001
 #define SYMBOLIC_LINK_SET 0x0002
-#define SYMBOLIC_LINK_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | 0x1)
-#define SYMBOLIC_LINK_ALL_ACCESS_EX (STANDARD_RIGHTS_REQUIRED | 0xFFFF)
+#define SYMBOLIC_LINK_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | SYMBOLIC_LINK_QUERY)
+#define SYMBOLIC_LINK_ALL_ACCESS_EX (STANDARD_RIGHTS_REQUIRED | SPECIFIC_RIGHTS_ALL)
 #endif
 
 #ifndef OBJ_PROTECT_CLOSE
@@ -64,28 +59,37 @@ typedef enum _OBJECT_INFORMATION_CLASS
 #define ObjectSessionObjectInformation 6
 #endif
 
+/**
+ * The OBJECT_BASIC_INFORMATION structure contains basic information about an object.
+ */
 typedef struct _OBJECT_BASIC_INFORMATION
 {
-    ULONG Attributes;
-    ACCESS_MASK GrantedAccess;
-    ULONG HandleCount;
-    ULONG PointerCount;
-    ULONG PagedPoolCharge;
-    ULONG NonPagedPoolCharge;
-    ULONG Reserved[3];
-    ULONG NameInfoSize;
-    ULONG TypeInfoSize;
-    ULONG SecurityDescriptorSize;
-    LARGE_INTEGER CreationTime;
+    ULONG Attributes;               // The attributes of the object include whether the object is permanent, can be inherited, and other characteristics.
+    ACCESS_MASK GrantedAccess;      // Specifies a mask that represents the granted access when the object was created.
+    ULONG HandleCount;              // The number of handles that are currently open for the object.
+    ULONG PointerCount;             // The number of references to the object from both handles and other references, such as those from the system.
+    ULONG PagedPoolCharge;          // The amount of paged pool memory that the object is using.
+    ULONG NonPagedPoolCharge;       // The amount of non-paged pool memory that the object is using.
+    ULONG Reserved[3];              // Reserved for future use.
+    ULONG NameInfoSize;             // The size of the name information for the object.
+    ULONG TypeInfoSize;             // The size of the type information for the object.
+    ULONG SecurityDescriptorSize;   // The size of the security descriptor for the object.
+    LARGE_INTEGER CreationTime;     // The time when a symbolic link was created. Not supported for other types of objects.
 } OBJECT_BASIC_INFORMATION, *POBJECT_BASIC_INFORMATION;
 
 #if (PHNT_MODE != PHNT_MODE_KERNEL)
+/**
+ * The OBJECT_NAME_INFORMATION structure contains the name, if there is one, of a given object.
+ */
 typedef struct _OBJECT_NAME_INFORMATION
 {
-    UNICODE_STRING Name;
+    UNICODE_STRING Name; // The object name (when present) includes a NULL-terminator and all path separators "\" in the name.
 } OBJECT_NAME_INFORMATION, *POBJECT_NAME_INFORMATION;
 #endif
 
+/**
+ * The OBJECT_NAME_INFORMATION structure contains various statistics and properties about an object type.
+ */
 typedef struct _OBJECT_TYPE_INFORMATION
 {
     UNICODE_STRING TypeName;
@@ -210,7 +214,7 @@ NtWaitForMultipleObjects(
     _In_opt_ PLARGE_INTEGER Timeout
     );
 
-#if (PHNT_VERSION >= PHNT_WS03)
+#if (PHNT_VERSION >= PHNT_WINDOWS_SERVER_2003)
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -238,7 +242,7 @@ NTAPI
 NtQuerySecurityObject(
     _In_ HANDLE Handle,
     _In_ SECURITY_INFORMATION SecurityInformation,
-    _Out_writes_bytes_opt_(Length) PSECURITY_DESCRIPTOR SecurityDescriptor,
+    _Out_writes_bytes_to_opt_(Length, *LengthNeeded) PSECURITY_DESCRIPTOR SecurityDescriptor,
     _In_ ULONG Length,
     _Out_ PULONG LengthNeeded
     );
@@ -250,7 +254,7 @@ NtClose(
     _In_ _Post_ptr_invalid_ HANDLE Handle
     );
 
-#if (PHNT_VERSION >= PHNT_THRESHOLD)
+#if (PHNT_VERSION >= PHNT_WINDOWS_10)
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -275,7 +279,7 @@ NtCreateDirectoryObject(
     _In_ POBJECT_ATTRIBUTES ObjectAttributes
     );
 
-#if (PHNT_VERSION >= PHNT_WIN8)
+#if (PHNT_VERSION >= PHNT_WINDOWS_8)
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -322,8 +326,6 @@ NtQueryDirectoryObject(
 
 #if (PHNT_MODE != PHNT_MODE_KERNEL)
 
-#if (PHNT_VERSION >= PHNT_VISTA)
-
 // private
 typedef enum _BOUNDARY_ENTRY_TYPE
 {
@@ -338,6 +340,12 @@ typedef struct _OBJECT_BOUNDARY_ENTRY
 {
     BOUNDARY_ENTRY_TYPE EntryType;
     ULONG EntrySize;
+    //union
+    //{
+    //    WCHAR Name[1];
+    //    PSID Sid;
+    //    PSID IntegrityLabel;
+    //};
 } OBJECT_BOUNDARY_ENTRY, *POBJECT_BOUNDARY_ENTRY;
 
 // rev
@@ -358,7 +366,10 @@ typedef struct _OBJECT_BOUNDARY_DESCRIPTOR
             ULONG Reserved : 31;
         };
     };
+    //OBJECT_BOUNDARY_ENTRY Entries[1];
 } OBJECT_BOUNDARY_DESCRIPTOR, *POBJECT_BOUNDARY_DESCRIPTOR;
+
+#if (PHNT_VERSION >= PHNT_WINDOWS_VISTA)
 
 NTSYSCALLAPI
 NTSTATUS
@@ -430,7 +441,7 @@ typedef enum _SYMBOLIC_LINK_INFO_CLASS
     MaxnSymbolicLinkInfoClass
 } SYMBOLIC_LINK_INFO_CLASS;
 
-#if (PHNT_VERSION >= PHNT_THRESHOLD)
+#if (PHNT_VERSION >= PHNT_WINDOWS_10)
 NTSYSCALLAPI
 NTSTATUS
 NTAPI

@@ -1,12 +1,7 @@
 /*
- * This file is part of the Process Hacker project - https://processhacker.sourceforge.io/
+ * Exception support functions
  *
- * You can redistribute this file and/or modify it under the terms of the 
- * Attribution 4.0 International (CC BY 4.0) license. 
- * 
- * You must give appropriate credit, provide a link to the license, and 
- * indicate if changes were made. You may do so in any reasonable manner, but 
- * not in any way that suggests the licensor endorses you or your use.
+ * This file is part of System Informer.
  */
 
 #ifndef _NTXCAPI_H
@@ -20,6 +15,7 @@ RtlDispatchException(
     _In_ PCONTEXT ContextRecord
     );
 
+_Analysis_noreturn_
 NTSYSAPI
 DECLSPEC_NORETURN
 VOID
@@ -35,6 +31,27 @@ RtlRaiseException(
     _In_ PEXCEPTION_RECORD ExceptionRecord
     );
 
+#if (PHNT_VERSION >= PHNT_WINDOWS_10_20H1)
+// rev
+NTSYSAPI
+VOID
+NTAPI
+RtlRaiseExceptionForReturnAddressHijack(
+    VOID
+    );
+
+// rev
+_Analysis_noreturn_
+NTSYSAPI
+DECLSPEC_NORETURN
+VOID
+NTAPI
+RtlRaiseNoncontinuableException(
+    _In_ PEXCEPTION_RECORD ExceptionRecord,
+    _In_ PCONTEXT ContextRecord
+    );
+#endif // PHNT_VERSION >= PHNT_WINDOWS_10_20H1
+
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
@@ -43,7 +60,7 @@ NtContinue(
     _In_ BOOLEAN TestAlert
     );
 
-#if (PHNT_VERSION >= PHNT_THRESHOLD)
+#if (PHNT_VERSION >= PHNT_WINDOWS_10)
 typedef enum _KCONTINUE_TYPE
 {
     KCONTINUE_UNWIND,
@@ -80,7 +97,7 @@ NtContinueEx(
 //{
 //    return NtContinueEx(ContextRecord, (PCONTINUE_ARGUMENT)TestAlert);
 //}
-#endif
+#endif // PHNT_VERSION >= PHNT_WINDOWS_10
 
 NTSYSCALLAPI
 NTSTATUS
@@ -91,8 +108,9 @@ NtRaiseException(
     _In_ BOOLEAN FirstChance
     );
 
-__analysis_noreturn
-NTSYSCALLAPI
+_Analysis_noreturn_
+NTSYSAPI
+DECLSPEC_NORETURN
 VOID
 NTAPI
 RtlAssert(
