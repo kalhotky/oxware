@@ -54,23 +54,32 @@ bool CMemoryFnDetourMgr::install_hooks()
 	CL_CreateMove().install();
 	CL_ReallocateDynamicData().install();
 	CL_DeallocateDynamicData().install();
-	MYgluPerspective().install();
+    if (COxWare::the().get_build_number() <= 8684) // TODO(kalhotky): implement workaround
+    {
+        MYgluPerspective().install(); // NOTE(kalhotky): inlined in hl25
+    }
 	if (COxWare::the().get_build_number() >= 4554)
 	{
 		R_ForceCVars().install(); // there isn't such function, e.g. in 3266
 	}
 	V_CalcRefdef().install();
-	//EV_HLDM_FireBullets().install();
+	//EV_HLDM_FireBullets().install(); // NOTE(kalhotky): inlined in hl25
 	HUD_Redraw().install();
 	R_GLStudioDrawPoints().install();
 	V_FadeAlpha().install();
 	V_ApplyShake().install();
 	S_StartDynamicSound().install();
 	R_DrawViewModel().install();
-	CPartSmokeGrenade__Create().install();
+    if (COxWare::the().get_build_number() <= 8684) // TODO(kalhotky): implement workaround, hook and move logic to CHLInterfaceHook::the().IParticleMan()->CoreInitializeSprite + check for smoke? just an idea
+    {
+        CPartSmokeGrenade__Create().install(); // NOTE(kalhotky): inlined in hl25
+    }
 	CreateGasSmoke().install();
 	CEngine__Unload().install();
-	SCR_CalcRefdef().install();
+    if (COxWare::the().get_build_number() <= 8684) // TODO(kalhotky): implement workaround, hook and move logic to V_UpdatePalette + vid.recalc_refdef check instead
+    {
+        SCR_CalcRefdef().install(); // NOTE(kalhotky): inlined in hl25
+    }
 	SCR_UpdateScreen().install();
 	SPR_Set().install();
 	CGame__AppActivate().install();
@@ -83,13 +92,19 @@ bool CMemoryFnDetourMgr::install_hooks()
 	MSG_WriteUsercmd().install();
 	CHudSniperScope__Draw().install();
 	CL_IsThirdPerson().install();
-	CL_ProcessEntityUpdate().install();
+    if (COxWare::the().get_build_number() <= 8684) // TODO(kalhotky): implement workaround, hook and move logic to CL_ProcessPacket
+    {
+        CL_ProcessEntityUpdate().install(); // NOTE(kalhotky): inlined in hl25
+    }
 	HUD_PostRunCmd().install();
 	HUD_CreateEntities().install();
 	HUD_DrawTransparentTriangles().install();
 	MakeSkyVec().install();
 	HUD_Frame().install();
-	R_DrawEntitiesOnList().install();
+    if (COxWare::the().get_build_number() <= 8684) // TODO(kalhotky): implement workaround, hook and move logic to R_DrawWorld
+    {
+        R_DrawEntitiesOnList().install(); // NOTE(kalhotky): inlined in hl25
+    }
 	R_StudioSetupLighting().install();
 	VGui_ViewportPaintBackground().install();
 #ifdef INTERCEPT_STEAM_LOGGING
@@ -127,7 +142,10 @@ void CMemoryFnDetourMgr::uninstall_hooks()
 	CL_CreateMove().uninstall();
 	CL_ReallocateDynamicData().uninstall();
 	CL_DeallocateDynamicData().uninstall();
-	MYgluPerspective().uninstall();
+    if (COxWare::the().get_build_number() <= 8684)
+    {
+        MYgluPerspective().uninstall();
+    }
 	if (COxWare::the().get_build_number() >= 4554)
 	{
 		R_ForceCVars().uninstall(); // there isn't such function, e.g. in 3266
@@ -140,7 +158,10 @@ void CMemoryFnDetourMgr::uninstall_hooks()
 	V_ApplyShake().uninstall();
 	S_StartDynamicSound().uninstall();
 	R_DrawViewModel().uninstall();
-	CPartSmokeGrenade__Create().uninstall();
+    if (COxWare::the().get_build_number() <= 8684)
+    {
+        CPartSmokeGrenade__Create().uninstall();
+    }
 	CreateGasSmoke().uninstall();
 
 	if (!m_unloading_from_CEngine__Unload)
@@ -149,7 +170,10 @@ void CMemoryFnDetourMgr::uninstall_hooks()
 		CEngine__Unload().uninstall();
 	}
 
-	SCR_CalcRefdef().uninstall();
+    if (COxWare::the().get_build_number() <= 8684)
+    {
+        SCR_CalcRefdef().uninstall();
+    }
 	SCR_UpdateScreen().uninstall();
 	SPR_Set().uninstall();
 	CGame__AppActivate().uninstall();
@@ -162,13 +186,19 @@ void CMemoryFnDetourMgr::uninstall_hooks()
 	MSG_WriteUsercmd().uninstall();
 	CHudSniperScope__Draw().uninstall();
 	CL_IsThirdPerson().uninstall();
-	CL_ProcessEntityUpdate().uninstall();
+    if (COxWare::the().get_build_number() <= 8684)
+    {
+        CL_ProcessEntityUpdate().uninstall();
+    }
 	HUD_PostRunCmd().uninstall();
 	HUD_CreateEntities().uninstall();
 	HUD_DrawTransparentTriangles().uninstall();
 	MakeSkyVec().uninstall();
 	HUD_Frame().uninstall();
-	R_DrawEntitiesOnList().uninstall();
+    if (COxWare::the().get_build_number() <= 8684)
+    {
+        R_DrawEntitiesOnList().uninstall();
+    }
 	R_StudioSetupLighting().uninstall();
 	VGui_ViewportPaintBackground().uninstall();
 #ifdef INTERCEPT_STEAM_LOGGING
