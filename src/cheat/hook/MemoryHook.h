@@ -289,6 +289,31 @@ struct host_initialized_MemoryHook final : public GenericMemoryHook<hl::qboolean
 	void test_hook() override;
 };
 
+// cl_enginefunc_t cl_enginefuncs
+struct cl_enginefuncs_MemoryHook final : public GenericMemoryHook<hl::cl_enginefunc_t>
+{
+    bool install() override;
+};
+
+// cldll_func_t cl_funcs
+struct cl_funcs_MemoryHook final : public GenericMemoryHook<hl::cldll_func_t>
+{
+    bool install() override;
+};
+
+// client_static_t cls
+struct cls_MemoryHook final : public GenericMemoryHook<hl::client_static_t>
+{
+    bool install() override;
+    void test_hook() override;
+};
+
+// char* keybindings[256]
+struct keybindings_MemoryHook final : public GenericMemoryHook<char*>
+{
+    bool install() override;
+};
+
 // edict_t* sv_player
 struct sv_player_MemoryHook final : public GenericMemoryHook<hl::edict_t*>
 {
@@ -454,6 +479,10 @@ public:
 
 	inline static auto& pmainwindow() { static pmainwindow_MemoryHook hook; return hook; };
 	inline static auto& host_initialized() { static host_initialized_MemoryHook hook; return hook; };
+    inline static auto& cl_enginefuncs() { static cl_enginefuncs_MemoryHook hook; return hook; };
+    inline static auto& cl_funcs() { static cl_funcs_MemoryHook hook; return hook; };
+    inline static auto& cls() { static cls_MemoryHook hook; return hook; };
+    inline static auto& keybindings() { static keybindings_MemoryHook hook; return hook; };
 	inline static auto& sv_player() { static sv_player_MemoryHook hook; return hook; };
 	inline static auto& cl() { static cl_MemoryHook hook; return hook; };
 	inline static auto& gGlobalVariables() { static gGlobalVariables_MemoryHook hook; return hook; };
@@ -474,15 +503,6 @@ public:
 	inline static auto& IVideoMode() { static IVideoMode_MemoryHook hook; return hook; };
 	inline static auto& random_1k_speedhack_modifier_constant() { static random_1k_speedhack_modifier_constant_MemoryHook hook; return hook; };
 	inline static auto& key_dest() { static key_dest_MemoryHook hook; return hook; };
-
-	//
-	// we can get these from elsewhere
-	//
-
-	static hl::cl_enginefunc_t* cl_enginefuncs();
-	static hl::cldll_func_t* cl_funcs();
-	static hl::client_static_t* cls();
-	static char** keybindings();
 };
 
 #endif // MEMORYHOOK_H

@@ -57,7 +57,7 @@ void CEnvironmentalEffects::initialize()
 {
 	begin_emulation();
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	// sounds
 	m_thunder_timer = cl_enginefuncs->pfnGetClientTime() + cl_enginefuncs->pfnRandomLong(60, 60 * 3);
@@ -149,7 +149,7 @@ void CEnvironmentalEffects::render()
 		as_lock = false;
 	}
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	auto client_data = CLocalState::the().get_current_frame_clientdata();
 
@@ -217,7 +217,7 @@ void CEnvironmentalEffects::begin_emulation()
 
 void CEnvironmentalEffects::precache_sprites()
 {
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	m_snow_sprite = (hl::model_t*)cl_enginefuncs->pfnGetSpritePointer(cl_enginefuncs->pfnSPR_Load("sprites/effects/snowflake.spr"));
 	m_rain_sprite = (hl::model_t*)cl_enginefuncs->pfnGetSpritePointer(cl_enginefuncs->pfnSPR_Load("sprites/effects/rain.spr"));
@@ -228,7 +228,7 @@ void CEnvironmentalEffects::precache_sprites()
 
 void CEnvironmentalEffects::render_rain()
 {
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	Vector local_velocity = CLocalState::the().get_local_velocity_vec();
 
@@ -265,7 +265,7 @@ void CEnvironmentalEffects::render_rain()
 
 void CEnvironmentalEffects::render_snow()
 {
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	Vector local_velocity = CLocalState::the().get_local_velocity_vec();
 
@@ -302,7 +302,7 @@ void CEnvironmentalEffects::render_snow()
 
 void CEnvironmentalEffects::render_ground_fog()
 {
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	Vector local_velocity = CLocalState::the().get_local_velocity_vec();
 	Vector local_origin = CLocalState::the().get_origin();
@@ -350,7 +350,7 @@ void CEnvironmentalEffects::create_raindrop(const Vector& origin)
 		return;
 	}
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	auto p = new hl::CPartRainDrop();
 	if (!p)
@@ -386,7 +386,7 @@ void CEnvironmentalEffects::create_snow_flake(const Vector& origin)
 		return;
 	}
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	auto p = new hl::CPartSnowFlake();
 	if (!p)
@@ -456,7 +456,7 @@ void CEnvironmentalEffects::create_wind_particle(const Vector& origin, float max
 		return; // couldn't alloc more particles
 	}
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	float size = cl_enginefuncs->pfnRandomFloat(50.0, max_size) * env_ground_fog_size.get_value();
 	p->InitializeSprite(origin + Vector(0.0f, 0.0f, 10.0f), g_vecZero, m_wind_particle_sprite, size, 1.0);
@@ -500,7 +500,7 @@ void CEnvironmentalEffects::create_wind_particle(const Vector& origin, float max
 
 void CEnvironmentalEffects::update_wind_variables()
 {
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	static float last_speed = env_wind_speed.get_value();
 
@@ -540,7 +540,7 @@ void CEnvironmentalEffects::update_wind_variables()
 
 void CEnvironmentalEffects::initialize_wind_variables()
 {
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 	
 	m_wind_span.x = cl_enginefuncs->pfnRandomFloat(-80.0f, 80.0f);
 	m_wind_span.y = cl_enginefuncs->pfnRandomFloat(-80.0f, 80.0f);
@@ -563,7 +563,7 @@ void CEnvironmentalEffects::play_ambient_rain_sound()
 
 	if (env_enable.get_value() && env_rain.get_value() && env_rain_ambient_thunder.get_value())
 	{
-		auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+		auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 		float time = cl_enginefuncs->pfnGetClientTime();
 		if (time > m_thunder_timer)
@@ -626,7 +626,7 @@ void CPartRainDrop::Think(float time)
 	Vector	vViewAngles;
 	float	dotLength;
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 	
 	cl_enginefuncs->pfnGetViewAngles(vViewAngles);
 
@@ -649,7 +649,7 @@ void CPartSnowFlake::Think(float time)
 	float flFrametime;
 	float fastFreq;
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	if (m_flBrightness < 130.0 && !m_bTouched)
 	{
@@ -691,7 +691,7 @@ void CPartSnowFlake::Touch(Vector pos, Vector normal, int index)
 
 	m_bTouched = true;
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	SetRenderFlag(RENDER_FACEPLAYER);
 
@@ -724,7 +724,7 @@ static hl::qboolean water_entry_point(hl::pmtrace_t* pTrace, const Vector& vecSr
 	Vector	vecDir;
 	float	fTolerance;
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	if (cl_enginefuncs->pfnPM_PointContents(pTrace->endpos, NULL) == cl_enginefuncs->pfnPM_PointContents((Vector&)vecSrc, NULL))
 	{
@@ -775,7 +775,7 @@ void CPartRainDrop::Touch(Vector pos, Vector normal, int index)
 
 	m_bTouched = true;
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	start = m_vOrigin;
 	start.z += 32.0f;
@@ -847,7 +847,7 @@ void CPartRainDrop::Touch(Vector pos, Vector normal, int index)
 
 void CPartWind::Think(float flTime)
 {
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	if (m_flDieTime - flTime <= 3.0f)
 	{

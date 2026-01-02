@@ -58,7 +58,7 @@ int EngineFont::calc_text_width(const std::string& text) const
 
 int EngineFont::render_text_internal(const Vector2D& where, bool background, const CColor& color, const std::string& text) const
 {
-	auto enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	int text_width_px = calc_text_width(text);
 

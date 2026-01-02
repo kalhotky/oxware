@@ -48,7 +48,7 @@ void CNetchanSequenceHistory::update()
 		m_sequences.pop_back();
 	}
 
-	int incoming_sequence = CMemoryHookMgr::the().cls()->netchan.incoming_sequence;
+	int incoming_sequence = CMemoryHookMgr::the().cls().get()->netchan.incoming_sequence;
 
 	if (incoming_sequence > m_last_incoming)
 	{
@@ -79,7 +79,7 @@ void CNetchanSequenceHistory::generate_fake_latency()
 		return; // didn't find any yet, need to wait a little bit so that we generate enough history records.
 	}
 
-	CMemoryHookMgr::the().cls()->netchan.incoming_sequence = entry.value().seq;
+	CMemoryHookMgr::the().cls().get()->netchan.incoming_sequence = entry.value().seq;
 }
 
 std::optional<netseq_t> CNetchanSequenceHistory::find_sequence_entry()

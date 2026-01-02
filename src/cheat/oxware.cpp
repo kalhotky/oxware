@@ -99,7 +99,7 @@ bool COxWare::initialize_phase2()
 		return false;
 	}
 
-	g_variablemgr_i->provide_hl_execute_cmd_pfn((m_hl_execute_cmd_pfn_t)CMemoryHookMgr::the().cl_enginefuncs()->pfnClientCmd);
+	g_variablemgr_i->provide_hl_execute_cmd_pfn((m_hl_execute_cmd_pfn_t)CMemoryHookMgr::the().cl_enginefuncs().get()->pfnClientCmd);
 	
 	CFeatureManager::the().initialize();
 

@@ -33,6 +33,10 @@ bool CMemoryHookMgr::install_hooks()
 	// let's install individual hooks.
 	if (!pmainwindow().install()) return false;
 	// host_initialized gets installed while initialization because it's needed in order to continue initing.
+    if (!cl_enginefuncs().install()) return false;
+    if (!cl_funcs().install()) return false;
+    if (!cls().install()) return false;
+    if (!keybindings().install()) return false;
 	if (!sv_player().install()) return false;
 	if (!cl().install()) return false;
 	if (!gGlobalVariables().install()) return false;
@@ -66,28 +70,6 @@ bool CMemoryHookMgr::install_hooks()
 void CMemoryHookMgr::uninstall_hooks()
 {
 	// here you can add hooks that needs to have their memory restored back (after you eventually modify it)
-}
-
-//-----------------------------------------------------------------------------
-
-hl::cl_enginefunc_t* CMemoryHookMgr::cl_enginefuncs()
-{
-	return CSecurityModuleHook::the().cl_enginefuncs();
-}
-
-hl::cldll_func_t* CMemoryHookMgr::cl_funcs()
-{
-	return CSecurityModuleHook::the().cl_funcs();
-}
-
-hl::client_static_t* CMemoryHookMgr::cls()
-{
-	return CSecurityModuleHook::the().cls();
-}
-
-char** CMemoryHookMgr::keybindings()
-{
-	return CSecurityModuleHook::the().keybindings();
 }
 
 //-----------------------------------------------------------------------------
@@ -135,6 +117,50 @@ void host_initialized_MemoryHook::test_hook()
 
 			return true;
 		});
+}
+
+//-----------------------------------------------------------------------------
+
+bool cl_enginefuncs_MemoryHook::install()
+{
+    initialize("cl_enginefuncs", L"hw.dll");
+    return install_using_bytepattern(1);
+}
+
+//-----------------------------------------------------------------------------
+
+bool cl_funcs_MemoryHook::install()
+{
+    initialize("cl_funcs", L"hw.dll");
+    return install_using_bytepattern(1);
+}
+
+//-----------------------------------------------------------------------------
+
+bool cls_MemoryHook::install()
+{
+    initialize("cls", L"hw.dll");
+    return install_using_bytepattern(1);
+}
+
+void cls_MemoryHook::test_hook()
+{
+    auto p = get();
+
+    CHookTests::the().run_seh_protected_block(
+        m_name,
+        [&]()
+        {
+            return p->state >= hl::ca_dedicated && p->state <= hl::ca_active;
+        });
+}
+
+//-----------------------------------------------------------------------------
+
+bool keybindings_MemoryHook::install()
+{
+    initialize("keybindings", L"hw.dll");
+    return install_using_bytepattern(1);
 }
 
 //-----------------------------------------------------------------------------

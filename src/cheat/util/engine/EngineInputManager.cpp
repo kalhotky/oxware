@@ -76,7 +76,7 @@ void CEngineInput::toggle_ingame_clientdll_mouse(bool active)
 {
 	m_clientdll_mouse_enabled = active;
 
-	auto cl_funcs = CMemoryHookMgr::the().cl_funcs();
+	auto cl_funcs = CMemoryHookMgr::the().cl_funcs().get();
 	if (cl_funcs)
 	{
 		if (active)

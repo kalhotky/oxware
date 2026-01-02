@@ -81,7 +81,7 @@ bool CStuffCmdFilter::allow_command_to_be_executed()
 	//
 
 	// see for all cvars
-	auto cvar = CMemoryHookMgr::the().cl_enginefuncs()->pfnGetFirstCvarPtr();
+	auto cvar = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetFirstCvarPtr();
 	while (cvar)
 	{
 		if (server_cmd_buffer_formatted.find(cvar->name) != std::string::npos)
@@ -96,7 +96,7 @@ bool CStuffCmdFilter::allow_command_to_be_executed()
 	// see for all commands
 	if (!found_cvar_or_cmd)
 	{
-		auto cmd = CMemoryHookMgr::the().cl_enginefuncs()->pfnGetFirstCmdFunctionHandle();
+		auto cmd = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetFirstCmdFunctionHandle();
 		while (cmd)
 		{
 			if (server_cmd_buffer_formatted.find(cmd->name) != std::string::npos)

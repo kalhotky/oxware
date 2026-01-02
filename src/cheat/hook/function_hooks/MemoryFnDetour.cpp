@@ -399,7 +399,7 @@ void Host_Noclip_f_FnDetour_t::Host_Noclip_f()
 bool CL_CreateMove_FnDetour_t::install()
 {
 	initialize("CL_CreateMove", L"hw.dll");
-	return detour_using_memory_address((uintptr_t*)CL_CreateMove, (uintptr_t*)CMemoryHookMgr::the().cl_funcs()->pfnHUD_CL_CreateMove);
+	return detour_using_memory_address((uintptr_t*)CL_CreateMove, (uintptr_t*)CMemoryHookMgr::the().cl_funcs().get()->pfnHUD_CL_CreateMove);
 }
 
 void CL_CreateMove_FnDetour_t::CL_CreateMove(float frametime, hl::usercmd_t *cmd, int active)
@@ -478,7 +478,7 @@ void _Host_Frame_FnDetour_t::_Host_Frame(float time)
 {
 	// see for connection change
 	static bool was_connected = false;
-	bool is_connected = (CMemoryHookMgr::the().cls()->state == hl::ca_active);
+	bool is_connected = (CMemoryHookMgr::the().cls().get()->state == hl::ca_active);
 	if (was_connected != is_connected)
 	{
 		CGameEvents::the().on_connect();
@@ -595,7 +595,7 @@ void R_ForceCVars_FnDetour_t::R_ForceCVars(hl::qboolean mp)
 bool V_CalcRefdef_FnDetour_t::install()
 {
 	initialize("V_CalcRefdef", L"client.dll");
-	return detour_using_memory_address((uintptr_t*)V_CalcRefdef, (uintptr_t*)CMemoryHookMgr::the().cl_funcs()->pfnHUD_CalcRef);
+	return detour_using_memory_address((uintptr_t*)V_CalcRefdef, (uintptr_t*)CMemoryHookMgr::the().cl_funcs().get()->pfnHUD_CalcRef);
 }
 
 void V_CalcRefdef_FnDetour_t::V_CalcRefdef(hl::ref_params_t *pparams)
@@ -637,7 +637,7 @@ void EV_HLDM_FireBullets_FnDetour_t::EV_HLDM_FireBullets(int idx, float* forward
 bool HUD_Redraw_FnDetour_t::install()
 {
 	initialize("HUD_Redraw", L"client.dll");
-	return detour_using_memory_address((uintptr_t*)HUD_Redraw, (uintptr_t*)CMemoryHookMgr::the().cl_funcs()->pfnHUD_Redraw);
+	return detour_using_memory_address((uintptr_t*)HUD_Redraw, (uintptr_t*)CMemoryHookMgr::the().cl_funcs().get()->pfnHUD_Redraw);
 }
 
 int HUD_Redraw_FnDetour_t::HUD_Redraw(float time, int intermission)
@@ -915,7 +915,7 @@ void SCR_UpdateScreen_FnDetour_t::SCR_UpdateScreen()
 bool SPR_Set_FnDetour_t::install()
 {
 	initialize("SPR_Set", L"hw.dll");
-	return detour_using_memory_address((uintptr_t*)SPR_Set, (uintptr_t*)CMemoryHookMgr::the().cl_enginefuncs()->pfnSPR_Set);
+	return detour_using_memory_address((uintptr_t*)SPR_Set, (uintptr_t*)CMemoryHookMgr::the().cl_enginefuncs().get()->pfnSPR_Set);
 }
 
 void SPR_Set_FnDetour_t::SPR_Set(hl::HSPRITE_t hSprite, int r, int g, int b)
@@ -1104,7 +1104,7 @@ void Cmd_AddMallocCommand_FnDetour_t::Cmd_AddMallocCommand(char* cmd_name, hl::x
 	// cmd_functions = cmd;
 	//
 	// so I assume that cmd_functions points to the newly added entry.
-	auto cmd = CMemoryHookMgr::the().cl_enginefuncs()->pfnGetFirstCmdFunctionHandle(); // cannot be null
+	auto cmd = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetFirstCmdFunctionHandle(); // cannot be null
 	CGoldSrcCommandMgr::the().register_cmd(cmd->name, cmd);
 }
 
@@ -1113,7 +1113,7 @@ void Cmd_AddMallocCommand_FnDetour_t::Cmd_AddMallocCommand(char* cmd_name, hl::x
 bool hudRegisterVariable_FnDetour_t::install()
 {
 	initialize("hudRegisterVariable", L"hw.dll");
-	return detour_using_memory_address((uintptr_t*)hudRegisterVariable, (uintptr_t*)CMemoryHookMgr::the().cl_enginefuncs()->pfnRegisterVariable);
+	return detour_using_memory_address((uintptr_t*)hudRegisterVariable, (uintptr_t*)CMemoryHookMgr::the().cl_enginefuncs().get()->pfnRegisterVariable);
 }
 
 hl::cvar_t* hudRegisterVariable_FnDetour_t::hudRegisterVariable(char* szName, char* szValue, int flags)
@@ -1178,7 +1178,7 @@ int __thiscall CHudSniperScope__Draw_FnDetour_t::CHudSniperScope__Draw(void* ecx
 bool CL_IsThirdPerson_FnDetour_t::install()
 {
 	initialize("CL_IsThirdPerson", L"client.dll");
-	return detour_using_memory_address((uintptr_t*)CL_IsThirdPerson, (uintptr_t*)CMemoryHookMgr::the().cl_funcs()->pfnHUD_CL_IsThirdperson);
+	return detour_using_memory_address((uintptr_t*)CL_IsThirdPerson, (uintptr_t*)CMemoryHookMgr::the().cl_funcs().get()->pfnHUD_CL_IsThirdperson);
 }
 
 int CL_IsThirdPerson_FnDetour_t::CL_IsThirdPerson()
@@ -1213,7 +1213,7 @@ void CL_ProcessEntityUpdate_FnDetour_t::CL_ProcessEntityUpdate(hl::cl_entity_t* 
 bool HUD_PostRunCmd_FnDetour_t::install()
 {
 	initialize("HUD_PostRunCmd", L"hw.dll");
-	return detour_using_memory_address((uintptr_t*)HUD_PostRunCmd, (uintptr_t*)CMemoryHookMgr::the().cl_funcs()->pfnHUD_PostRunCmd);
+	return detour_using_memory_address((uintptr_t*)HUD_PostRunCmd, (uintptr_t*)CMemoryHookMgr::the().cl_funcs().get()->pfnHUD_PostRunCmd);
 }
 
 void HUD_PostRunCmd_FnDetour_t::HUD_PostRunCmd(hl::local_state_t* from, hl::local_state_t* to, hl::usercmd_t* cmd, int runfuncs, 
@@ -1229,7 +1229,7 @@ void HUD_PostRunCmd_FnDetour_t::HUD_PostRunCmd(hl::local_state_t* from, hl::loca
 bool HUD_CreateEntities_FnDetour_t::install()
 {
 	initialize("HUD_CreateEntities", L"hw.dll");
-	return detour_using_memory_address((uintptr_t*)HUD_CreateEntities, (uintptr_t*)CMemoryHookMgr::the().cl_funcs()->pfnHUD_CreateEntities);
+	return detour_using_memory_address((uintptr_t*)HUD_CreateEntities, (uintptr_t*)CMemoryHookMgr::the().cl_funcs().get()->pfnHUD_CreateEntities);
 }
 
 void HUD_CreateEntities_FnDetour_t::HUD_CreateEntities()
@@ -1250,7 +1250,7 @@ void HUD_CreateEntities_FnDetour_t::HUD_CreateEntities()
 bool HUD_DrawTransparentTriangles_FnDetour_t::install()
 {
 	initialize("HUD_DrawTransparentTriangles", L"hw.dll");
-	return detour_using_memory_address((uintptr_t*)HUD_DrawTransparentTriangles, (uintptr_t*)CMemoryHookMgr::the().cl_funcs()->pfnHUD_DrawTransTris);
+	return detour_using_memory_address((uintptr_t*)HUD_DrawTransparentTriangles, (uintptr_t*)CMemoryHookMgr::the().cl_funcs().get()->pfnHUD_DrawTransTris);
 }
 
 void HUD_DrawTransparentTriangles_FnDetour_t::HUD_DrawTransparentTriangles()
@@ -1292,7 +1292,7 @@ void MakeSkyVec_FnDetour_t::MakeSkyVec(float s, float t, int axis)
 bool HUD_Frame_FnDetour_t::install()
 {
 	initialize("HUD_Frame", L"hw.dll");
-	return detour_using_memory_address((uintptr_t*)HUD_Frame, (uintptr_t*)CMemoryHookMgr::the().cl_funcs()->pfnHUD_Frame);
+	return detour_using_memory_address((uintptr_t*)HUD_Frame, (uintptr_t*)CMemoryHookMgr::the().cl_funcs().get()->pfnHUD_Frame);
 }
 
 void HUD_Frame_FnDetour_t::HUD_Frame()
@@ -1352,7 +1352,7 @@ void R_StudioSetupLighting_FnDetour_t::R_StudioSetupLighting(hl::alight_t* pligh
 bool VGui_ViewportPaintBackground_FnDetour_t::install()
 {
 	initialize("VGui_ViewportPaintBackground", L"hw.dll");
-	return detour_using_memory_address((uintptr_t*)VGui_ViewportPaintBackground, (uintptr_t*)CMemoryHookMgr::the().cl_enginefuncs()->pfnVGui_ViewportPaintBackground);
+	return detour_using_memory_address((uintptr_t*)VGui_ViewportPaintBackground, (uintptr_t*)CMemoryHookMgr::the().cl_enginefuncs().get()->pfnVGui_ViewportPaintBackground);
 }
 
 void VGui_ViewportPaintBackground_FnDetour_t::VGui_ViewportPaintBackground(int* extents)

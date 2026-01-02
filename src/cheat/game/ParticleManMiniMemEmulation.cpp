@@ -179,7 +179,7 @@ void CMiniMemEmulator::process_all()
 	int					j;
 	hl::cl_entity_t*	localEntity;
 
-	time = CMemoryHookMgr::the().cl_enginefuncs()->pfnGetClientTime();
+	time = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetClientTime();
 
 	m_total_parts = m_parts_drawn = 0;
 
@@ -199,7 +199,7 @@ void CMiniMemEmulator::process_all()
 
 			if (pEffect->CheckVisibility())
 			{
-				localEntity = CMemoryHookMgr::the().cl_enginefuncs()->pfnGetLocalPlayer();
+				localEntity = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetLocalPlayer();
 				vPlayerOrigin = localEntity->origin;
 
 				flDistance = 0.0f;
@@ -214,7 +214,7 @@ void CMiniMemEmulator::process_all()
 				m_allocated_visible_particles[m_parts_drawn++].pVisibleParticle = pEffect;
 			}
 
-			if (CMemoryHookMgr::the().cl_enginefuncs()->pfnGetClientTime() != *g_flOldTime)
+			if (CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetClientTime() != *g_flOldTime)
 			{
 				pEffect->Think(time);
 			}

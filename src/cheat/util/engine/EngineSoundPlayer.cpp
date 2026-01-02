@@ -30,7 +30,7 @@
 
 void CEngineSoundPlayer::play_engine_sound(int ent, const Vector& origin, int channel, const char* sample, float volume, float attenuation, int fFlags, int pitch)
 {
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	//
 	// use EventAPI because unlike the function from pmove, it doesn't use CL_DemoQueueSound(), so the

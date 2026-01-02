@@ -28,15 +28,6 @@
 
 #include "precompiled.h"
 
-template<class T>
-inline void callback_table_hook_t<T>::install(const char* name, T* _ptr, const T& _original)
-{
-	ptr = _ptr;
-	original = _original;
-
-	CConsole::the().info("Found {} at 0x{:08X}", name, (uintptr_t)_ptr);
-}
-
 #if 0
 #define P(name) CConsole::the().info("{}()", name)
 #else
@@ -131,9 +122,6 @@ static void ModFuncs_SetModcHelpers(hl::modchelpers_t* pmodchelpers)
 static void ModFuncs_SetEngData(hl::engdata_t* pengdata)
 {
 	P(__FUNCTION__);
-	// we can use this function to set our engdata hook
-
-	CSecurityModuleHook::the().set_engdata(pengdata);
 }
 
 static void ModFuncs_ConnectClient(int iPlayer)
@@ -777,18 +765,13 @@ bool CSecurityModuleHook::install_hooks()
 	{
 		return false;
 	}
-	
-	if (!CommonLoadSecurityModule().install())
-	{
-		return false;
-	}
 
-	if (!CloseSecurityModule().install())
-	{
-		return false;
-	}
+    if (!g_engdstAddrs().install())
+    {
+        return false;
+    }
 
-	setup();
+    fill_modfuncs_callback_table();
 
 	CConsole::the().info("Security module hook initialized.");
 
@@ -803,38 +786,7 @@ void CSecurityModuleHook::uninstall_hooks()
 		return;
 	}
 
-	s_enginefunc_hook.restore();
-	s_enginefunc_dst_hook.restore();
-	s_cl_funcs_hook.restore();
-
-	CloseSecurityModule().uninstall();
-
 	restore_modfuncs_callback_table();
-}
-
-void CSecurityModuleHook::setup()
-{
-	// fill modfuncs_t wtih non-null data that can be used when CommonLoadSecurityModule is called.
-	fill_modfuncs_callback_table();
-
-	CConsole::the().info("Calling CommonLoadSecurityModule to retreive and modify pointers...");
-
-	// Now call this function, which will eventually call g_modfuncs callbacks, that we hook. From these callbacks
-	// we can get useful pointers to information.
-	CommonLoadSecurityModule().call(NULL);
-
-	//
-	// Ok, now we have engdata_t pointer, let's fill others.
-	//
-
-	// callback tables
-	s_enginefunc_hook.install("cl_enginefunc_t", s_engdata.pcl_enginefuncs, *s_engdata.pcl_enginefuncs);
-	s_enginefunc_dst_hook.install("cl_enginefunc_dst_t", s_engdata.pg_engdstAddrs, *s_engdata.pg_engdstAddrs);
-	s_cl_funcs_hook.install("cldll_func_t", s_engdata.pcl_funcs, *s_engdata.pcl_funcs);
-
-	// regular pointer to pointer hooks
-	s_keybindings = (char**)s_engdata.pkeybindings;
-	s_cls = (hl::client_static_t*)s_engdata.pcls;
 }
 
 void CSecurityModuleHook::fill_modfuncs_callback_table()
@@ -873,132 +825,124 @@ void CSecurityModuleHook::restore_modfuncs_callback_table()
 
 void CSecurityModuleHook::fill_engdst_callback_table()
 {
-	auto cl_enginefunc_dst = s_enginefunc_dst_hook.ptr;
-	cl_enginefunc_dst->pfnSPR_Load = EngDst_SPR_Load;
-	cl_enginefunc_dst->pfnSPR_Frames = EngDst_SPR_Frames;
-	cl_enginefunc_dst->pfnSPR_Height = EngDst_SPR_Height;
-	cl_enginefunc_dst->pfnSPR_Width = EngDst_SPR_Width;
-	cl_enginefunc_dst->pfnSPR_Set = EngDst_SPR_Set;
-	cl_enginefunc_dst->pfnSPR_Draw = EngDst_SPR_Draw;
-	cl_enginefunc_dst->pfnSPR_DrawHoles = EngDst_SPR_DrawHoles;
-	cl_enginefunc_dst->pfnSPR_DrawAdditive = EngDst_SPR_DrawAdditive;
-	cl_enginefunc_dst->pfnSPR_EnableScissor = EngDst_SPR_EnableScissor;
-	cl_enginefunc_dst->pfnSPR_DisableScissor = EngDst_SPR_DisableScissor;
-	cl_enginefunc_dst->pfnSPR_GetList = EngDst_SPR_GetList;
-	cl_enginefunc_dst->pfnFillRGBA = EngDst_FillRGBA;
-	cl_enginefunc_dst->pfnGetScreenInfo = EngDst_GetScreenInfo;
-	cl_enginefunc_dst->pfnSetCrosshair = EngDst_SetCrosshair;
-	cl_enginefunc_dst->pfnRegisterVariable = EngDst_RegisterVariable;
-	cl_enginefunc_dst->pfnGetCvarFloat = EngDst_GetCvarFloat;
-	cl_enginefunc_dst->pfnGetCvarString = EngDst_GetCvarString;
-	cl_enginefunc_dst->pfnAddCommand = (hl::pfnDst_AddCommand_t)EngDst_AddCommand;
-	cl_enginefunc_dst->pfnHookUserMsg = EngDst_HookUserMsg;
-	cl_enginefunc_dst->pfnServerCmd = EngDst_ServerCmd;
-	cl_enginefunc_dst->pfnClientCmd = EngDst_ClientCmd;
-	cl_enginefunc_dst->pfnGetPlayerInfo = EngDst_GetPlayerInfo;
-	cl_enginefunc_dst->pfnPlaySoundByName = EngDst_PlaySoundByName;
-	cl_enginefunc_dst->pfnPlaySoundByIndex = EngDst_PlaySoundByIndex;
-	cl_enginefunc_dst->pfnAngleVectors = EngDst_AngleVectors;
-	cl_enginefunc_dst->pfnTextMessageGet = EngDst_TextMessageGet;
-	cl_enginefunc_dst->pfnDrawCharacter = EngDst_DrawCharacter;
-	cl_enginefunc_dst->pfnDrawConsoleString = EngDst_DrawConsoleString;
-	cl_enginefunc_dst->pfnDrawSetTextColor = EngDst_DrawSetTextColor;
-	cl_enginefunc_dst->pfnDrawConsoleStringLen = EngDst_DrawConsoleStringLen;
-	cl_enginefunc_dst->pfnConsolePrint = EngDst_ConsolePrint;
-	cl_enginefunc_dst->pfnCenterPrint = EngDst_CenterPrint;
-	cl_enginefunc_dst->GetWindowCenterX = EngDst_GetWindowCenterX;
-	cl_enginefunc_dst->GetWindowCenterY = EngDst_GetWindowCenterY;
-	cl_enginefunc_dst->GetViewAngles = EngDst_GetViewAngles;
-	cl_enginefunc_dst->SetViewAngles = EngDst_SetViewAngles;
-	cl_enginefunc_dst->GetMaxClients = EngDst_GetMaxClients;
-	cl_enginefunc_dst->Cvar_SetValue = EngDst_Cvar_SetValue;
-	cl_enginefunc_dst->Cmd_Argc = EngDst_Cmd_Argc;
-	cl_enginefunc_dst->Cmd_Argv = EngDst_Cmd_Argv;
-	cl_enginefunc_dst->Con_Printf = EngDst_Con_Printf;
-	cl_enginefunc_dst->Con_DPrintf = EngDst_Con_DPrintf;
-	cl_enginefunc_dst->Con_NPrintf = EngDst_Con_NPrintf;
-	cl_enginefunc_dst->Con_NXPrintf = EngDst_Con_NXPrintf;
-	cl_enginefunc_dst->PhysInfo_ValueForKey = EngDst_PhysInfo_ValueForKey;
-	cl_enginefunc_dst->ServerInfo_ValueForKey = EngDst_ServerInfo_ValueForKey;
-	cl_enginefunc_dst->GetClientMaxspeed = EngDst_GetClientMaxspeed;
-	cl_enginefunc_dst->CheckParm = EngDst_CheckParm;
-	cl_enginefunc_dst->Key_Event = EngDst_Key_Event;
-	cl_enginefunc_dst->GetMousePosition = EngDst_GetMousePosition;
-	cl_enginefunc_dst->IsNoClipping = EngDst_IsNoClipping;
-	cl_enginefunc_dst->GetLocalPlayer = EngDst_GetLocalPlayer;
-	cl_enginefunc_dst->GetViewModel = EngDst_GetViewModel;
-	cl_enginefunc_dst->GetEntityByIndex = EngDst_GetEntityByIndex;
-	cl_enginefunc_dst->GetClientTime = EngDst_GetClientTime;
-	cl_enginefunc_dst->V_CalcShake = EngDst_V_CalcShake;
-	cl_enginefunc_dst->V_ApplyShake = EngDst_V_ApplyShake;
-	cl_enginefunc_dst->PM_PointContents = EngDst_PM_PointContents;
-	cl_enginefunc_dst->PM_WaterEntity = EngDst_PM_WaterEntity;
-	cl_enginefunc_dst->PM_TraceLine = EngDst_PM_TraceLine;
-	cl_enginefunc_dst->CL_LoadModel = EngDst_CL_LoadModel;
-	cl_enginefunc_dst->CL_CreateVisibleEntity = EngDst_CL_CreateVisibleEntity;
-	cl_enginefunc_dst->GetSpritePointer = EngDst_GetSpritePointer;
-	cl_enginefunc_dst->pfnPlaySoundByNameAtLocation = EngDst_PlaySoundByNameAtLocation;
-	cl_enginefunc_dst->pfnPrecacheEvent = EngDst_PrecacheEvent;
-	cl_enginefunc_dst->pfnPlaybackEvent = EngDst_PlaybackEvent;
-	cl_enginefunc_dst->pfnWeaponAnim = EngDst_WeaponAnim;
-	cl_enginefunc_dst->pfnRandomFloat = EngDst_RandomFloat;
-	cl_enginefunc_dst->pfnRandomLong = EngDst_RandomLong;
-	cl_enginefunc_dst->pfnHookEvent = (hl::pfnDst_HookEvent_t)EngDst_HookEvent;
-	cl_enginefunc_dst->Con_IsVisible = EngDst_Con_IsVisible;
-	cl_enginefunc_dst->pfnGetGameDirectory = EngDst_GetGameDirectory;
-	cl_enginefunc_dst->pfnGetCvarPointer = EngDst_GetCvarPointer;
-	cl_enginefunc_dst->Key_LookupBinding = EngDst_Key_LookupBinding;
-	cl_enginefunc_dst->pfnGetLevelName = EngDst_GetLevelName;
-	cl_enginefunc_dst->pfnGetScreenFade = EngDst_GetScreenFade;
-	cl_enginefunc_dst->pfnSetScreenFade = EngDst_SetScreenFade;
-	cl_enginefunc_dst->VGui_GetPanel = EngDst_VGui_GetPanel;
-	cl_enginefunc_dst->VGui_ViewportPaintBackground = EngDst_VGui_ViewportPaintBackground;
-	cl_enginefunc_dst->COM_LoadFile = EngDst_COM_LoadFile;
-	cl_enginefunc_dst->COM_ParseFile = EngDst_COM_ParseFile;
-	cl_enginefunc_dst->COM_FreeFile = EngDst_COM_FreeFile;
-	cl_enginefunc_dst->IsSpectateOnly = EngDst_IsSpectateOnly;
-	cl_enginefunc_dst->LoadMapSprite = EngDst_LoadMapSprite;
-	cl_enginefunc_dst->COM_AddAppDirectoryToSearchPath = EngDst_COM_AddAppDirectoryToSearchPath;
-	cl_enginefunc_dst->COM_ExpandFilename = EngDst_COM_ExpandFilename;
-	cl_enginefunc_dst->PlayerInfo_ValueForKey = EngDst_PlayerInfo_ValueForKey;
-	cl_enginefunc_dst->PlayerInfo_SetValueForKey = EngDst_PlayerInfo_SetValueForKey;
-	cl_enginefunc_dst->GetPlayerUniqueID = EngDst_GetPlayerUniqueID;
-	cl_enginefunc_dst->GetTrackerIDForPlayer = EngDst_GetTrackerIDForPlayer;
-	cl_enginefunc_dst->GetPlayerForTrackerID = EngDst_GetPlayerForTrackerID;
-	cl_enginefunc_dst->pfnServerCmdUnreliable = EngDst_ServerCmdUnreliable;
-	cl_enginefunc_dst->pfnGetMousePos = EngDst_GetMousePos;
-	cl_enginefunc_dst->pfnSetMousePos = EngDst_SetMousePos;
-	cl_enginefunc_dst->pfnSetMouseEnable = EngDst_SetMouseEnable;
-	cl_enginefunc_dst->pfnSetFilterMode = EngDst_SetFilterMode;
-	cl_enginefunc_dst->pfnSetFilterColor = EngDst_SetFilterColor;
-	cl_enginefunc_dst->pfnSetFilterBrightness = EngDst_SetFilterBrightness;
-	cl_enginefunc_dst->pfnSequenceGet = EngDst_SequenceGet;
-	cl_enginefunc_dst->pfnSPR_DrawGeneric = EngDst_SPR_DrawGeneric;
-	cl_enginefunc_dst->pfnSequencePickSentence = EngDst_SequencePickSentence;
-	cl_enginefunc_dst->pfnDrawString = EngDst_DrawString;
-	cl_enginefunc_dst->pfnDrawStringReverse = EngDst_DrawStringReverse;
-	cl_enginefunc_dst->LocalPlayerInfo_ValueForKey = EngDst_LocalPlayerInfo_ValueForKey;
-	cl_enginefunc_dst->pfnVGUI2DrawCharacter = EngDst_VGUI2DrawCharacter;
-	cl_enginefunc_dst->pfnVGUI2DrawCharacterAdd = EngDst_VGUI2DrawCharacterAdd;
-	cl_enginefunc_dst->pfnPlaySoundVoiceByName = EngDst_PlaySoundVoiceByName;
-	cl_enginefunc_dst->pfnPrimeMusicStream = EngDst_PrimeMusicStream;
-	cl_enginefunc_dst->pfnProcessTutorMessageDecayBuffer = EngDst_ProcessTutorMessageDecayBuffer;
-	cl_enginefunc_dst->pfnConstructTutorMessageDecayBuffer = EngDst_ConstructTutorMessageDecayBuffer;
-	cl_enginefunc_dst->pfnResetTutorMessageDecayData = EngDst_ResetTutorMessageDecayData;
-	cl_enginefunc_dst->pfnPlaySoundByNameAtPitch = EngDst_PlaySoundByNameAtPitch;
-	cl_enginefunc_dst->pfnFillRGBABlend = EngDst_FillRGBABlend;
-	cl_enginefunc_dst->pfnGetAppID = EngDst_GetAppID;
-	cl_enginefunc_dst->pfnGetAliasList = EngDst_GetAliases;
-	cl_enginefunc_dst->pfnVguiWrap2_GetMouseDelta = EngDst_VguiWrap2_GetMouseDelta;
-	cl_enginefunc_dst->pfnFilteredClientCmd = EngDst_FilteredClientCmd;
-}
-
-//-----------------------------------------------------------------------------
-
-bool CommonLoadSecurityModule_FnHook_t::install()
-{
-	initialize("CommonLoadSecurityModule", L"hw.dll");
-	return install_using_bytepattern(0);
+    auto pg_engdstAddrs = g_engdstAddrs().get();
+	pg_engdstAddrs->pfnSPR_Load = EngDst_SPR_Load;
+	pg_engdstAddrs->pfnSPR_Frames = EngDst_SPR_Frames;
+	pg_engdstAddrs->pfnSPR_Height = EngDst_SPR_Height;
+	pg_engdstAddrs->pfnSPR_Width = EngDst_SPR_Width;
+	pg_engdstAddrs->pfnSPR_Set = EngDst_SPR_Set;
+	pg_engdstAddrs->pfnSPR_Draw = EngDst_SPR_Draw;
+	pg_engdstAddrs->pfnSPR_DrawHoles = EngDst_SPR_DrawHoles;
+	pg_engdstAddrs->pfnSPR_DrawAdditive = EngDst_SPR_DrawAdditive;
+	pg_engdstAddrs->pfnSPR_EnableScissor = EngDst_SPR_EnableScissor;
+	pg_engdstAddrs->pfnSPR_DisableScissor = EngDst_SPR_DisableScissor;
+	pg_engdstAddrs->pfnSPR_GetList = EngDst_SPR_GetList;
+	pg_engdstAddrs->pfnFillRGBA = EngDst_FillRGBA;
+	pg_engdstAddrs->pfnGetScreenInfo = EngDst_GetScreenInfo;
+	pg_engdstAddrs->pfnSetCrosshair = EngDst_SetCrosshair;
+	pg_engdstAddrs->pfnRegisterVariable = EngDst_RegisterVariable;
+	pg_engdstAddrs->pfnGetCvarFloat = EngDst_GetCvarFloat;
+	pg_engdstAddrs->pfnGetCvarString = EngDst_GetCvarString;
+	pg_engdstAddrs->pfnAddCommand = (hl::pfnDst_AddCommand_t)EngDst_AddCommand;
+	pg_engdstAddrs->pfnHookUserMsg = EngDst_HookUserMsg;
+	pg_engdstAddrs->pfnServerCmd = EngDst_ServerCmd;
+	pg_engdstAddrs->pfnClientCmd = EngDst_ClientCmd;
+	pg_engdstAddrs->pfnGetPlayerInfo = EngDst_GetPlayerInfo;
+	pg_engdstAddrs->pfnPlaySoundByName = EngDst_PlaySoundByName;
+	pg_engdstAddrs->pfnPlaySoundByIndex = EngDst_PlaySoundByIndex;
+	pg_engdstAddrs->pfnAngleVectors = EngDst_AngleVectors;
+	pg_engdstAddrs->pfnTextMessageGet = EngDst_TextMessageGet;
+	pg_engdstAddrs->pfnDrawCharacter = EngDst_DrawCharacter;
+	pg_engdstAddrs->pfnDrawConsoleString = EngDst_DrawConsoleString;
+	pg_engdstAddrs->pfnDrawSetTextColor = EngDst_DrawSetTextColor;
+	pg_engdstAddrs->pfnDrawConsoleStringLen = EngDst_DrawConsoleStringLen;
+	pg_engdstAddrs->pfnConsolePrint = EngDst_ConsolePrint;
+	pg_engdstAddrs->pfnCenterPrint = EngDst_CenterPrint;
+	pg_engdstAddrs->GetWindowCenterX = EngDst_GetWindowCenterX;
+	pg_engdstAddrs->GetWindowCenterY = EngDst_GetWindowCenterY;
+	pg_engdstAddrs->GetViewAngles = EngDst_GetViewAngles;
+	pg_engdstAddrs->SetViewAngles = EngDst_SetViewAngles;
+	pg_engdstAddrs->GetMaxClients = EngDst_GetMaxClients;
+	pg_engdstAddrs->Cvar_SetValue = EngDst_Cvar_SetValue;
+	pg_engdstAddrs->Cmd_Argc = EngDst_Cmd_Argc;
+	pg_engdstAddrs->Cmd_Argv = EngDst_Cmd_Argv;
+	pg_engdstAddrs->Con_Printf = EngDst_Con_Printf;
+	pg_engdstAddrs->Con_DPrintf = EngDst_Con_DPrintf;
+	pg_engdstAddrs->Con_NPrintf = EngDst_Con_NPrintf;
+	pg_engdstAddrs->Con_NXPrintf = EngDst_Con_NXPrintf;
+	pg_engdstAddrs->PhysInfo_ValueForKey = EngDst_PhysInfo_ValueForKey;
+	pg_engdstAddrs->ServerInfo_ValueForKey = EngDst_ServerInfo_ValueForKey;
+	pg_engdstAddrs->GetClientMaxspeed = EngDst_GetClientMaxspeed;
+	pg_engdstAddrs->CheckParm = EngDst_CheckParm;
+	pg_engdstAddrs->Key_Event = EngDst_Key_Event;
+	pg_engdstAddrs->GetMousePosition = EngDst_GetMousePosition;
+	pg_engdstAddrs->IsNoClipping = EngDst_IsNoClipping;
+	pg_engdstAddrs->GetLocalPlayer = EngDst_GetLocalPlayer;
+	pg_engdstAddrs->GetViewModel = EngDst_GetViewModel;
+	pg_engdstAddrs->GetEntityByIndex = EngDst_GetEntityByIndex;
+	pg_engdstAddrs->GetClientTime = EngDst_GetClientTime;
+	pg_engdstAddrs->V_CalcShake = EngDst_V_CalcShake;
+	pg_engdstAddrs->V_ApplyShake = EngDst_V_ApplyShake;
+	pg_engdstAddrs->PM_PointContents = EngDst_PM_PointContents;
+	pg_engdstAddrs->PM_WaterEntity = EngDst_PM_WaterEntity;
+	pg_engdstAddrs->PM_TraceLine = EngDst_PM_TraceLine;
+	pg_engdstAddrs->CL_LoadModel = EngDst_CL_LoadModel;
+	pg_engdstAddrs->CL_CreateVisibleEntity = EngDst_CL_CreateVisibleEntity;
+	pg_engdstAddrs->GetSpritePointer = EngDst_GetSpritePointer;
+	pg_engdstAddrs->pfnPlaySoundByNameAtLocation = EngDst_PlaySoundByNameAtLocation;
+	pg_engdstAddrs->pfnPrecacheEvent = EngDst_PrecacheEvent;
+	pg_engdstAddrs->pfnPlaybackEvent = EngDst_PlaybackEvent;
+	pg_engdstAddrs->pfnWeaponAnim = EngDst_WeaponAnim;
+	pg_engdstAddrs->pfnRandomFloat = EngDst_RandomFloat;
+	pg_engdstAddrs->pfnRandomLong = EngDst_RandomLong;
+	pg_engdstAddrs->pfnHookEvent = (hl::pfnDst_HookEvent_t)EngDst_HookEvent;
+	pg_engdstAddrs->Con_IsVisible = EngDst_Con_IsVisible;
+	pg_engdstAddrs->pfnGetGameDirectory = EngDst_GetGameDirectory;
+	pg_engdstAddrs->pfnGetCvarPointer = EngDst_GetCvarPointer;
+	pg_engdstAddrs->Key_LookupBinding = EngDst_Key_LookupBinding;
+	pg_engdstAddrs->pfnGetLevelName = EngDst_GetLevelName;
+	pg_engdstAddrs->pfnGetScreenFade = EngDst_GetScreenFade;
+	pg_engdstAddrs->pfnSetScreenFade = EngDst_SetScreenFade;
+	pg_engdstAddrs->VGui_GetPanel = EngDst_VGui_GetPanel;
+	pg_engdstAddrs->VGui_ViewportPaintBackground = EngDst_VGui_ViewportPaintBackground;
+	pg_engdstAddrs->COM_LoadFile = EngDst_COM_LoadFile;
+	pg_engdstAddrs->COM_ParseFile = EngDst_COM_ParseFile;
+	pg_engdstAddrs->COM_FreeFile = EngDst_COM_FreeFile;
+	pg_engdstAddrs->IsSpectateOnly = EngDst_IsSpectateOnly;
+	pg_engdstAddrs->LoadMapSprite = EngDst_LoadMapSprite;
+	pg_engdstAddrs->COM_AddAppDirectoryToSearchPath = EngDst_COM_AddAppDirectoryToSearchPath;
+	pg_engdstAddrs->COM_ExpandFilename = EngDst_COM_ExpandFilename;
+	pg_engdstAddrs->PlayerInfo_ValueForKey = EngDst_PlayerInfo_ValueForKey;
+	pg_engdstAddrs->PlayerInfo_SetValueForKey = EngDst_PlayerInfo_SetValueForKey;
+	pg_engdstAddrs->GetPlayerUniqueID = EngDst_GetPlayerUniqueID;
+	pg_engdstAddrs->GetTrackerIDForPlayer = EngDst_GetTrackerIDForPlayer;
+	pg_engdstAddrs->GetPlayerForTrackerID = EngDst_GetPlayerForTrackerID;
+	pg_engdstAddrs->pfnServerCmdUnreliable = EngDst_ServerCmdUnreliable;
+	pg_engdstAddrs->pfnGetMousePos = EngDst_GetMousePos;
+	pg_engdstAddrs->pfnSetMousePos = EngDst_SetMousePos;
+	pg_engdstAddrs->pfnSetMouseEnable = EngDst_SetMouseEnable;
+	pg_engdstAddrs->pfnSetFilterMode = EngDst_SetFilterMode;
+	pg_engdstAddrs->pfnSetFilterColor = EngDst_SetFilterColor;
+	pg_engdstAddrs->pfnSetFilterBrightness = EngDst_SetFilterBrightness;
+	pg_engdstAddrs->pfnSequenceGet = EngDst_SequenceGet;
+	pg_engdstAddrs->pfnSPR_DrawGeneric = EngDst_SPR_DrawGeneric;
+	pg_engdstAddrs->pfnSequencePickSentence = EngDst_SequencePickSentence;
+	pg_engdstAddrs->pfnDrawString = EngDst_DrawString;
+	pg_engdstAddrs->pfnDrawStringReverse = EngDst_DrawStringReverse;
+	pg_engdstAddrs->LocalPlayerInfo_ValueForKey = EngDst_LocalPlayerInfo_ValueForKey;
+	pg_engdstAddrs->pfnVGUI2DrawCharacter = EngDst_VGUI2DrawCharacter;
+	pg_engdstAddrs->pfnVGUI2DrawCharacterAdd = EngDst_VGUI2DrawCharacterAdd;
+	pg_engdstAddrs->pfnPlaySoundVoiceByName = EngDst_PlaySoundVoiceByName;
+	pg_engdstAddrs->pfnPrimeMusicStream = EngDst_PrimeMusicStream;
+	pg_engdstAddrs->pfnProcessTutorMessageDecayBuffer = EngDst_ProcessTutorMessageDecayBuffer;
+	pg_engdstAddrs->pfnConstructTutorMessageDecayBuffer = EngDst_ConstructTutorMessageDecayBuffer;
+	pg_engdstAddrs->pfnResetTutorMessageDecayData = EngDst_ResetTutorMessageDecayData;
+	pg_engdstAddrs->pfnPlaySoundByNameAtPitch = EngDst_PlaySoundByNameAtPitch;
+	pg_engdstAddrs->pfnFillRGBABlend = EngDst_FillRGBABlend;
+	pg_engdstAddrs->pfnGetAppID = EngDst_GetAppID;
+	pg_engdstAddrs->pfnGetAliasList = EngDst_GetAliases;
+	pg_engdstAddrs->pfnVguiWrap2_GetMouseDelta = EngDst_VguiWrap2_GetMouseDelta;
+	pg_engdstAddrs->pfnFilteredClientCmd = EngDst_FilteredClientCmd;
 }
 
 //-----------------------------------------------------------------------------
@@ -1023,20 +967,10 @@ void g_modfuncs_MemoryHook::test_hook()
 
 //-----------------------------------------------------------------------------
 
-bool CloseSecurityModule_FnDetour_t::install()
+bool g_engdstAddrs_MemoryHook::install()
 {
-	initialize("CloseSecurityModule", L"hw.dll");
-	return detour_using_bytepattern((uintptr_t*)CloseSecurityModule);
-}
-
-void CloseSecurityModule_FnDetour_t::CloseSecurityModule()
-{
-	// This function still gets called inside CL_Disconnect. I have nodiea why, it's just stupid, but whatever.
-	// If it's called, it resets all of the pointers we've set. Unless we'd set g_module.fLoaded back to zero
-	// (which is set inside CommonLoadSecurityModule), we're fucked. :D
-	return;
-
-	CSecurityModuleHook::the().CloseSecurityModule().call();
+    initialize("g_engdstAddrs", L"hw.dll");
+    return install_using_bytepattern(1);
 }
 
 //-----------------------------------------------------------------------------

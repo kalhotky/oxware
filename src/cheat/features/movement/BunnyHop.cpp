@@ -105,7 +105,7 @@ void CMovementBunnyHop::legit_bhop(float frametime)
 {
 	float gnd_dist = CLocalState::the().get_ground_dist();
 	bool is_onground = perfect_condition_for_jump();
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	determine_random_gnddist_for_jump_simul(is_onground);
 
@@ -195,7 +195,7 @@ void CMovementBunnyHop::simulate_jump(float frametime)
 
 void CMovementBunnyHop::determine_random_gnddist_for_jump_simul(bool on_ground)
 {
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 	static bool was_on_ground = false;
 	if (on_ground != was_on_ground)
 	{
@@ -237,7 +237,7 @@ bool CMovementBunnyHop::perfect_condition_for_jump()
 
 bool CMovementBunnyHop::randomize_jump_pattern(bool is_onground)
 {
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 	static unsigned cnt = 0;
 	int dens = movement_bhop_legit_scroll_density.get_value();
 	if (dens == 5)

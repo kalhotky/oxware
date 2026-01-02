@@ -118,7 +118,7 @@ void CForceEnableDisabled::update_disable_sponly_cvars()
 	{
 		if (m_saved_sponly_cvars.empty())
 		{
-			auto cvar = CMemoryHookMgr::the().cl_enginefuncs()->pfnGetFirstCvarPtr();
+			auto cvar = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetFirstCvarPtr();
 
 			while (cvar)
 			{

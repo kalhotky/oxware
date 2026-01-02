@@ -30,7 +30,7 @@
 
 bool CGameUtil::is_fully_connected()
 {
-	if (CMemoryHookMgr::the().cls()->state != hl::ca_active)
+	if (CMemoryHookMgr::the().cls().get()->state != hl::ca_active)
 		return false;
 
 	auto cl = CMemoryHookMgr::the().cl().get();
@@ -50,12 +50,12 @@ bool CGameUtil::is_fully_connected()
 bool CGameUtil::is_sp()
 {
 	// if loopback is on, we're single.
-	return CMemoryHookMgr::the().cls()->netchan.remote_address.type == hl::NA_LOOPBACK;
+	return CMemoryHookMgr::the().cls().get()->netchan.remote_address.type == hl::NA_LOOPBACK;
 }
 
 void CGameUtil::reset_all_in_states()
 {
-	auto cmd = CMemoryHookMgr::the().cl_enginefuncs()->pfnGetFirstCmdFunctionHandle();
+	auto cmd = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetFirstCmdFunctionHandle();
 
 	// if you disable these, you get weird (mouse) look glitches, where you can only move on the yaw axes. So keep these blacklisted.
 	static const char* except_these[] =
@@ -93,7 +93,7 @@ void CGameUtil::reset_all_in_states()
 
 bool CGameUtil::world_to_screen(Vector world, Vector2D& screen)
 {
-	hl::qboolean z_clipped = CMemoryHookMgr::the().cl_enginefuncs()->pTriAPI->WorldToScreen(world, screen);
+	hl::qboolean z_clipped = CMemoryHookMgr::the().cl_enginefuncs().get()->pTriAPI->WorldToScreen(world, screen);
 
 	// get the real screen size. in fullscreen, the monitor size and in windowed mode, the window size.
 	Vector2D screen_size = CVideoModeUtil::the().get_real_screen_size();
@@ -251,7 +251,7 @@ hl::SCREENINFO CGameUtil::get_engine_screen_info()
 	info.iSize = sizeof(hl::SCREENINFO); // must be set before you request it from the engine!
 
 	// the function fails if the size differs/isn't set orl when the pointer passed is null.
-	CMemoryHookMgr::the().cl_enginefuncs()->pfnGetScreenInfo(&info);
+	CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetScreenInfo(&info);
 
 	return info;
 }
@@ -275,7 +275,7 @@ float CGameUtil::compute_ground_angle_for_origin(const Vector& origin, float tra
 {
 	Vector trace_end = Vector(origin.x, origin.y, -trace_distance); // trace as back as this
 
-	hl::pmtrace_t* tr = CMemoryHookMgr::the().cl_enginefuncs()->pfnPM_TraceLine(
+	hl::pmtrace_t* tr = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnPM_TraceLine(
 		(Vector)origin, trace_end, PM_TRACELINE_ANYVISIBLE, CLocalState::the().get_current_hull_tracing(), -1);
 	
 	// plane normal returns the [0, 1] scale of rotation of the plane [0°, 90°].
@@ -293,7 +293,7 @@ float CGameUtil::compute_distance_to_ground(const Vector& origin, float trace_di
 {
 	Vector trace_end = Vector(origin.x, origin.y, -trace_distance); // trace as back as this
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 	
 	hl::pmtrace_t* tr = cl_enginefuncs->pfnPM_TraceLine(
 		(Vector)origin, trace_end, PM_TRACELINE_ANYVISIBLE, CLocalState::the().get_current_hull_tracing(), -1);
@@ -332,7 +332,7 @@ float CGameUtil::compute_edge_distance(const Vector& origin, float edge_trace_di
 		{ -1,  1 },
 	};
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	for (int i = 0; i < 8; i++)
 	{
@@ -379,7 +379,7 @@ float CGameUtil::compute_edge_distance(const Vector& origin, float edge_trace_di
 	// Note: Doesn't work on ramps.
 	//
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 //	auto t1 = std::chrono::high_resolution_clock::now();
 
@@ -390,7 +390,7 @@ float CGameUtil::compute_edge_distance(const Vector& origin, float edge_trace_di
 		// Note: there were some really, really, really weird issues with this lambda capturing. If i tried
 		//		 to use `cl_enginefuncs` used above, basically what happened was that the pointer suddenly
 		//		 inside this lambda scope became invalid? I don't understand at all. Anyway, this works..
-		hl::pmtrace_t* tr = CMemoryHookMgr::the().cl_enginefuncs()->pfnPM_TraceLine(
+		hl::pmtrace_t* tr = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnPM_TraceLine(
 			(Vector)start, (Vector)end, PM_TRACELINE_ANYVISIBLE, CLocalState::the().get_current_hull_tracing(), -1);
 		return tr->endpos[N];
 	};
@@ -434,7 +434,7 @@ struct hud_command_t
 
 void CGameUtil::record_hud_command(const char* cmdname)
 {
-	auto cls = CMemoryHookMgr::the().cls();
+	auto cls = CMemoryHookMgr::the().cls().get();
 
 	if (!cls->demorecording || cls->spectator)
 	{
@@ -542,7 +542,7 @@ std::vector<std::string> CGameUtil::tokenize_goldsrc_command(const char* text)
 {
 	std::vector<std::string> tokens;
 
-	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs();
+	auto cl_enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
 
 	while (1)
 	{
