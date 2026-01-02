@@ -106,6 +106,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)src/public/;$(SolutionDir)src/external/soil/</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
       <ExceptionHandling>false</ExceptionHandling>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -134,6 +135,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)src/public/;$(SolutionDir)src/external/soil/</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
       <ExceptionHandling>false</ExceptionHandling>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -163,6 +165,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)src/public/;$(SolutionDir)src/external/soil/</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
       <ExceptionHandling>false</ExceptionHandling>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -190,6 +193,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)src/public/;$(SolutionDir)src/external/soil/</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
       <ExceptionHandling>false</ExceptionHandling>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
