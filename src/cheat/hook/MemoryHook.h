@@ -275,6 +275,34 @@ private:
 
 //-----------------------------------------------------------------------------
 
+enum class BuildCompat : uint8_t
+{
+    legacy = 0,
+    hl25
+};
+
+template <typename T_legacy, typename T_hl25>
+class BuildCompatGenericMemoryHook : public GenericMemoryHook<void*>
+{
+public:
+    template <BuildCompat BC>
+    auto* get() const
+    {
+        if constexpr (BC == BuildCompat::legacy)
+        {
+            return reinterpret_cast<T_legacy*>(GenericMemoryHook<void*>::get());
+        }
+        else if constexpr (BC == BuildCompat::hl25)
+        {
+            return reinterpret_cast<T_hl25*>(GenericMemoryHook<void*>::get());
+        }
+
+        static_assert(true, "Invalid BuildCompat");
+    }
+};
+
+//-----------------------------------------------------------------------------
+
 // HWND *pmainwindow;
 struct pmainwindow_MemoryHook final : public GenericMemoryHook<HWND*>
 {
@@ -321,7 +349,7 @@ struct sv_player_MemoryHook final : public GenericMemoryHook<hl::edict_t*>
 };
 
 // client_state_t cl;
-struct cl_MemoryHook final : public GenericMemoryHook<hl::client_state_t>
+struct cl_MemoryHook final : public BuildCompatGenericMemoryHook<hl::client_state_t, hl::client_state_hl25_t>
 {
 	bool install() override;
 	void test_hook() override;
@@ -432,7 +460,7 @@ struct realtime_MemoryHook final : public GenericMemoryHook<double>
 };
 
 // IVideoMode* videomode;
-struct IVideoMode_MemoryHook final : public GenericMemoryHook<hl::IVideoMode*>
+struct IVideoMode_MemoryHook final : public BuildCompatGenericMemoryHook<hl::IVideoMode*, hl::IVideoMode_HL25*>
 { 
 	bool install() override; 
 	void test_hook() override;

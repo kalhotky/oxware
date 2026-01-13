@@ -30,8 +30,14 @@
 
 void CLocalState::update_pre_clientmove(float frametime, hl::usercmd_t * cmd)
 {
-	auto cl = CMemoryHookMgr::the().cl().get();
-	m_last_viewangles = cl->viewangles;
+    if (COxWare::the().is_legacy_build())
+    {
+        m_last_viewangles = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewangles;
+    }
+    else
+    {
+        m_last_viewangles = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewangles;
+    }
 }
 
 void CLocalState::update_clientmove(float frametime, hl::usercmd_t* cmd)
@@ -40,8 +46,24 @@ void CLocalState::update_clientmove(float frametime, hl::usercmd_t* cmd)
 
 	m_engine_frametime = frametime;
 
-	auto cl = CMemoryHookMgr::the().cl().get();
-	m_vieangle_delta = Vector2D(cl->viewangles[YAW] - m_last_viewangles[YAW], cl->viewangles[PITCH] - m_last_viewangles[PITCH]);
+    hl::vec3_t cl_viewangles;
+    int cl_parsecountmod;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        cl_viewangles = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewangles;
+        cl_parsecountmod = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->parsecountmod;
+        m_current_frame = &CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->frames[cl_parsecountmod];
+    }
+    else
+    {
+        cl_viewangles = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewangles;
+        cl_parsecountmod = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->parsecountmod;
+        m_current_frame = &CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->frames[cl_parsecountmod];
+
+    }
+
+	m_vieangle_delta = Vector2D(cl_viewangles[YAW] - m_last_viewangles[YAW], cl_viewangles[PITCH] - m_last_viewangles[PITCH]);
 	m_vieangle_delta *= -1.0f;
 
 	// round to zero
@@ -50,10 +72,8 @@ void CLocalState::update_clientmove(float frametime, hl::usercmd_t* cmd)
 
 	m_pmove = *CMemoryHookMgr::the().pmove().get();
 
-	m_current_frame = &cl->frames[cl->parsecountmod];
-
-	// playermove flags
-	m_player_flags = m_current_frame->clientdata.flags;
+    // playermove flags
+    m_player_flags = get_current_frame_clientdata()->flags;
 
 	// set this first! because the tracing code needs it!
 	m_tracing_hull = is_ducking() ? HULL_DUCKING : HULL_STANDING;
@@ -94,22 +114,22 @@ int CLocalState::get_player_flags()
 
 bool CLocalState::player_can_shoot()
 {
-	return m_current_frame->clientdata.iuser3 & PLAYER_CAN_SHOOT;
+	return get_current_frame_clientdata()->iuser3 & PLAYER_CAN_SHOOT;
 }
 
 bool CLocalState::player_freeze_time_over()
 {
-	return m_current_frame->clientdata.iuser3 & PLAYER_FREEZE_TIME_OVER;
+	return get_current_frame_clientdata()->iuser3 & PLAYER_FREEZE_TIME_OVER;
 }
 
 bool CLocalState::player_in_bomb_zone()
 {
-	return m_current_frame->clientdata.iuser3 & PLAYER_IN_BOMB_ZONE;
+	return get_current_frame_clientdata()->iuser3 & PLAYER_IN_BOMB_ZONE;
 }
 
 bool CLocalState::player_holding_shield()
 {
-	return m_current_frame->clientdata.iuser3 & PLAYER_HOLDING_SHIELD;
+	return get_current_frame_clientdata()->iuser3 & PLAYER_HOLDING_SHIELD;
 }
 
 bool CLocalState::is_ducking()
@@ -150,7 +170,8 @@ Vector CLocalState::get_local_velocity_vec()
 
 hl::clientdata_t* CLocalState::get_current_frame_clientdata()
 {
-	return &m_current_frame->clientdata;
+    hl::clientdata_t& clientdata = COxWare::the().is_legacy_build() ? ((hl::frame_t*)m_current_frame)->clientdata : ((hl::frame_hl25_t*)m_current_frame)->clientdata;
+	return &clientdata;
 }
 
 Vector CLocalState::get_origin()
@@ -229,7 +250,7 @@ Vector2D CLocalState::get_viewangle_delta()
 	return m_vieangle_delta;
 }
 
-hl::frame_t* CLocalState::get_current_frame()
+void* CLocalState::get_current_frame()
 {
 	return m_current_frame;
 }

@@ -65,17 +65,26 @@ bool CResourceConsistencyBypass::detour_consistency_info(hl::sizebuf_t* msg)
 
 	bool is_steam = CGenericUtil::the().does_cmdline_parameter_exist("-steam");
 
-	auto cl = CMemoryHookMgr::the().cl().get();
+    hl::qboolean* cl_need_force_consistency_response;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        cl_need_force_consistency_response = &CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->need_force_consistency_response;
+    }
+    else
+    {
+        cl_need_force_consistency_response = &CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->need_force_consistency_response;
+    }
 
 	auto& studio_bounds_fn = CMemoryFnHookMgr::the().R_GetStudioBounds();
 	auto& hash_file_fn = CMemoryFnHookMgr::the().MD5_Hash_File();
 
-	if (!cl->need_force_consistency_response)
+	if (!*cl_need_force_consistency_response)
 	{
 		return true; // server didn't request any consistency response
 	}
 
-	cl->need_force_consistency_response = FALSE;
+	*cl_need_force_consistency_response = FALSE;
 
 	CHLNetMessageIO::the().write_byte(msg, clc_fileconsistency);
 	int msg_start_pos = msg->cursize; // Save starting position of the message
@@ -93,16 +102,33 @@ bool CResourceConsistencyBypass::detour_consistency_info(hl::sizebuf_t* msg)
 	byte md5[16];
 	Vector mins, maxs;
 
+    hl::consistency_t* consistency_list;
+    int num_consistency;
+    int servercount;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        consistency_list = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->consistency_list;
+        num_consistency = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->num_consistency;
+        servercount = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->servercount;
+    }
+    else
+    {
+        consistency_list = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->consistency_list;
+        num_consistency = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->num_consistency;
+        servercount = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->servercount;
+    }
+
 	if (consistencybypass_log.get_value())
 	{
-		CConsole::the().info("Server wants to check {} files inside your Half-Life directory.", cl->num_consistency);
+		CConsole::the().info("Server wants to check {} files inside your Half-Life directory.", num_consistency);
 		CConsole::the().info("{:<3}  {:<48} {:<32} {}", "id", "resource name", "check type", "response");
 		CConsole::the().info("-------------------------------------------------------------------------------------------------");
 	}
 
-	for (int i = 0; i < cl->num_consistency; i++)
+	for (int i = 0; i < num_consistency; i++)
 	{
-		auto item = &cl->consistency_list[i];
+		auto item = &consistency_list[i];
 		if (!item)
 		{
 			continue;
@@ -255,6 +281,6 @@ bool CResourceConsistencyBypass::detour_consistency_info(hl::sizebuf_t* msg)
 	unsigned totalsize = msg->cursize - msg_start_pos - sizeof(short);
 	*(unsigned short*)(&msg->data[msg_start_pos]) = totalsize;
 
-	GoldSrcMungificationAlgorithms::the().enmungify(msg->data + msg_start_pos + sizeof(short), totalsize, cl->servercount);
+	GoldSrcMungificationAlgorithms::the().enmungify(msg->data + msg_start_pos + sizeof(short), totalsize, servercount);
 	return true;
 }

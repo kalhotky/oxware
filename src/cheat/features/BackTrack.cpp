@@ -182,7 +182,7 @@ float CBacktrack::calc_update_interval_ms(float updaterate)
 }
 
 // add in fake latency, too
-float CBacktrack::get_raw_client_latency(hl::frame_t * frame)
+float CBacktrack::get_raw_client_latency(void* frame)
 {
 	// fake latency we simulate through sending server history sequences
 	float lat = 0.0f;
@@ -194,7 +194,7 @@ float CBacktrack::get_raw_client_latency(hl::frame_t * frame)
 	{
 		// actual latency calculated by the engine this frame
 		// the engine latency is delta between current engine time and time of command from last incoming_acknowledged sequence.
-		lat = frame->latency;
+		lat = COxWare::the().is_legacy_build() ? ((hl::frame_t*)frame)->latency : ((hl::frame_hl25_t*)frame)->latency;
 	}
 
 	return lat;
@@ -249,9 +249,18 @@ bool CBacktrack::backtrack_entity(hl::cl_entity_t* ent, float lerp_msec, Vector&
 	}
 
 	// client-side data
-	float ft = CLocalState::the().get_engine_frametime();			// engine frametime
-	auto frame = CLocalState::the().get_current_frame();		// latest frame data we received from server
-	float realtime = CMemoryHookMgr::the().cl().get()->time;	// engine timestamp
+	float ft = CLocalState::the().get_engine_frametime();	// engine frametime
+	auto frame = CLocalState::the().get_current_frame();	// latest frame data we received from server
+	float realtime;	                                        // engine timestamp
+
+    if (COxWare::the().is_legacy_build())
+    {
+        realtime = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->time;
+    }
+    else
+    {
+        realtime = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->time;
+    }
 
 	// capped update rate interval
 	float update_interval_ms = calc_update_interval_ms(cl_updaterate->value);

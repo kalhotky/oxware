@@ -181,19 +181,38 @@ bool cl_MemoryHook::install()
 
 void cl_MemoryHook::test_hook()
 {
-	auto p = get();
+    if (COxWare::the().is_legacy_build())
+    {
+        auto p = get<BuildCompat::legacy>();
 
-	CHookTests::the().run_seh_protected_block(
-		m_name,
-		[&]()
-		{
-			if (CGameUtil::the().is_fully_connected())
-			{
-				return p->time != 0.0;
-			}
+        CHookTests::the().run_seh_protected_block(
+            m_name,
+            [&]()
+            {
+                if (CGameUtil::the().is_fully_connected())
+                {
+                    return p->time != 0.0;
+                }
 
-			return true;
-		});
+                return true;
+            });
+    }
+    else
+    {
+        auto p = get<BuildCompat::hl25>();
+
+        CHookTests::the().run_seh_protected_block(
+            m_name,
+            [&]()
+            {
+                if (CGameUtil::the().is_fully_connected())
+                {
+                    return p->time != 0.0;
+                }
+
+                return true;
+            });
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -501,14 +520,28 @@ bool IVideoMode_MemoryHook::install()
 
 void IVideoMode_MemoryHook::test_hook()
 {
-	auto p = get();
+    if (COxWare::the().is_legacy_build())
+    {
+        auto p = get<BuildCompat::legacy>();
 
-	CHookTests::the().run_seh_protected_block(
-		m_name,
-		[&]()
-	{
-		return *p != nullptr;
-	});
+        CHookTests::the().run_seh_protected_block(
+            m_name,
+            [&]()
+        {
+                return (*p)->GetName() != nullptr;
+        });
+    }
+    else
+    {
+        auto p = get<BuildCompat::hl25>();
+
+        CHookTests::the().run_seh_protected_block(
+            m_name,
+            [&]()
+        {
+            return (*p)->GetName() != nullptr;
+        });
+    }
 }
 
 //-----------------------------------------------------------------------------

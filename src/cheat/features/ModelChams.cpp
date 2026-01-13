@@ -81,7 +81,15 @@ std::array<ChammedModel, CHAMS_COUNT> CModelChams::m_chammed_models =
 		&mdlchams_viewmodel_enable, &mdlchams_viewmodel_color, &mdlchams_viewmodel_type, &mdlchams_viewmodel_shadelight, &mdlchams_viewmodel_ambientlight,
 		[](hl::cl_entity_t* current_ent) 
 		{
-			return current_ent == &CMemoryHookMgr::the().cl().get()->viewent;
+            if (COxWare::the().is_legacy_build())
+            {
+                return current_ent == &CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewent;
+            }
+            else
+            {
+                return current_ent == &CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewent;
+    
+            }
 		}),
 
 	// CHAMS_PLAYERS_CT
@@ -429,8 +437,16 @@ void CModelChams::force_default_models()
 		return;
 	}
 
-	auto cl = CMemoryHookMgr::the().cl().get();
-	auto vm = &cl->viewent;
+    hl::cl_entity_t* vm;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        vm = &CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewent;
+    }
+    else
+    {
+        vm = &CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewent;
+    }
 
 	auto current_weapon = CWeapons::the().get_current_weapon();
 	if (current_weapon)
@@ -530,7 +546,16 @@ void ChammedModel::process_color(GLfloat* r, GLfloat* g, GLfloat* b, GLfloat* a)
 	if (mdlchams_rainbow.get_value())
 	{
 		float speed = (float)mdlchams_rainbow_speed.get_value();
-		double tm = CMemoryHookMgr::the().cl().get()->time;
+		double tm;
+
+        if (COxWare::the().is_legacy_build())
+        {
+            tm = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->time;
+        }
+        else
+        {
+            tm = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->time;
+        }
 
 		// all phase-shifted so that it's more cool
 		color.r = std::abs(std::sinf(tm * speed + 0));

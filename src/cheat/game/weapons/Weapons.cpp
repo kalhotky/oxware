@@ -186,7 +186,18 @@ bool CCSWeapon::has_secondary_attack() const
 
 float CCSWeapon::time_since_last_fired() const
 {
-	return CMemoryHookMgr::the().cl().get()->time - m_last_time_fired;
+    float time;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        time = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->time;
+    }
+    else
+    {
+        time = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->time;
+    }
+
+	return time - m_last_time_fired;
 }
 
 bool CCSWeapon::is_useable() const

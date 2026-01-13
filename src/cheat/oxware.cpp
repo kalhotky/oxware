@@ -582,6 +582,8 @@ bool COxWare::validate_engine_build()
 		return false;
 	}
 
+    m_is_legacy_build = m_gs_build_number <= 8684;
+
 	CConsole::the().info("Your build number is {}.", m_gs_build_number);
 	return true;
 }

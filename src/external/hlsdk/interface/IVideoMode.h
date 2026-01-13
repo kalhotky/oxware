@@ -56,6 +56,33 @@ public:
 	virtual void		ReleaseVideo() = 0;
 };
 
+class IVideoMode_HL25
+{
+public:
+    virtual const char* GetName() = 0;
+
+    virtual bool		Init(void* pvInstance) = 0;
+    virtual void        PlayStartupSequence() = 0;
+    virtual void		Shutdown() = 0;
+
+    virtual bool		AddMode(int width, int height, int bpp) = 0;
+    virtual vmode_t*	GetCurrentMode() = 0;
+    virtual vmode_t*	GetMode(int num) = 0;
+    virtual int			GetModeCount() = 0;
+
+    virtual bool		IsWindowedMode() const = 0;
+
+    virtual bool		GetInitialized() const = 0;
+    virtual void		SetInitialized(bool init) = 0;
+
+    virtual void		UpdateWindowPosition() = 0;
+
+    virtual void		FlipScreen() = 0;
+
+    virtual void		RestoreVideo() = 0;
+    virtual void		ReleaseVideo() = 0;
+};
+
 extern IVideoMode* videomode;
 
 #endif // IVIDEOMODE_H

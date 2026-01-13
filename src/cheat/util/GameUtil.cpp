@@ -33,7 +33,16 @@ bool CGameUtil::is_fully_connected()
 	if (CMemoryHookMgr::the().cls().get()->state != hl::ca_active)
 		return false;
 
-	auto cl = CMemoryHookMgr::the().cl().get();
+    char* levelname;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        levelname = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->levelname;
+    }
+    else
+    {
+        levelname = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->levelname;
+    }
 
 	// this is set when svc_serverinfo is issued (after the first disconnect)
 	// now we're fully connected and we'll soon render frames.
@@ -41,7 +50,7 @@ bool CGameUtil::is_fully_connected()
 	// this is just a sanity check for scenarious when we're in a level transition, 
 	// the state remains ca_active, but it really isn't. Only after svc_serverinfo is
 	// issued, it's updated back to ca_connected and levelname is set.
-	if (!cl->levelname || !cl->levelname[0])
+	if (!levelname || !levelname[0])
 		return false;
 
 	return true;
@@ -124,7 +133,18 @@ bool CGameUtil::world_to_screen(Vector world, Vector2D& screen)
 
 bool CGameUtil::is_player_index(int index)
 {
-	return (index > WORLD_ENTITY && index <= CMemoryHookMgr::the().cl().get()->maxclients);
+    int maxclients;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        maxclients = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->maxclients;
+    }
+    else
+    {
+        maxclients = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->maxclients;
+    }
+
+	return (index > WORLD_ENTITY && index <= maxclients);
 }
 
 int CGameUtil::is_player_on_enemy_team(int index)
@@ -159,7 +179,18 @@ int CGameUtil::is_player_on_enemy_team(int index)
 
 bool CGameUtil::is_local_player(int index)
 {
-	return index == (CMemoryHookMgr::the().cl().get()->playernum + 1);
+    int local_index;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        local_index = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->playernum + 1;
+    }
+    else
+    {
+        local_index = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->playernum + 1;
+    }
+
+	return index == local_index;
 }
 
 typedef struct

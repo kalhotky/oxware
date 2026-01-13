@@ -47,7 +47,6 @@ void CIngameScreenRendering::better_cl_showfps()
 	}
 
 	auto enginefuncs = CMemoryHookMgr::the().cl_enginefuncs().get();
-	auto cl = CMemoryHookMgr::the().cl().get();
 
 	if (!cl_showfps)
 	{
@@ -68,7 +67,17 @@ void CIngameScreenRendering::better_cl_showfps()
 		strcpy(cl_showfps->string, "0");
 	}
 
-	auto level_name = cl->levelname;
+    char* level_name;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        level_name = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->levelname;
+    }
+    else
+    {
+        level_name = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->levelname;
+    }
+
 	bool is_on_map = level_name[0];
 
 	double ft = CLocalState::the().get_engine_frametime();

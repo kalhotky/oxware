@@ -69,6 +69,7 @@ public:
 	inline bool is_game_exiting_or_restarting() const { return m_game_exiting_or_restarting; }
 
 	int get_build_number() const { return m_gs_build_number; }
+    bool is_legacy_build() const { return m_is_legacy_build; }
 
 	bool at_least_once_focused() const { return m_at_least_once_focused; }
 	void set_at_least_once_focused() { m_at_least_once_focused = true; }
@@ -112,6 +113,7 @@ private:
 	bool m_dont_write_unloading_code = false;
 
 	int m_gs_build_number = 0;
+    bool m_is_legacy_build = true;
 
 	bool m_at_least_once_focused = false;
 

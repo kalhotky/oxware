@@ -86,5 +86,12 @@ void CThirdPerson::update(hl::ref_params_t* pparams)
 	pparams->vieworg += offset;
 
 	// if CL_IsThirdPerson() returns true, game fucks up our view angles. Restore.
-	pparams->viewangles = CMemoryHookMgr::the().cl().get()->viewangles;
+    if (COxWare::the().is_legacy_build())
+    {
+        pparams->viewangles = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewangles;
+    }
+    else
+    {
+        pparams->viewangles = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewangles;
+    }
 }

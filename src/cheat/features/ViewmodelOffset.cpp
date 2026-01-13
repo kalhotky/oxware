@@ -46,14 +46,25 @@ void CViewmodelOffset::update()
 	{
 		return;
 	}
+    
+    hl::vec3_t* cl_viewangles;
+    hl::cl_entity_t* vm;
 
-	auto cl = CMemoryHookMgr::the().cl().get();
-	auto vm = &cl->viewent;
+    if (COxWare::the().is_legacy_build())
+    {
+        cl_viewangles = &CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewangles;
+        vm = &CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewent;
+    }
+    else
+    {
+        cl_viewangles = &CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewangles;
+        vm = &CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewent;
+    }
 
 	float offset = viewmodel_offset_value.get_value();
 
 	Vector forward;
-	CMath::the().angle_vectors(cl->viewangles, &forward, nullptr, nullptr);
+	CMath::the().angle_vectors(*cl_viewangles, &forward, nullptr, nullptr);
 
 	vm->origin += forward * offset;
 }

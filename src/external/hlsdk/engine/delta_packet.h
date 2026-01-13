@@ -18,6 +18,7 @@
 #pragma once
 
 #define	MAX_PACKET_ENTITIES			256		// 256 visible entities per frame
+#define	MAX_PACKET_ENTITIES_HL25	1024	// 1024 visible entities per frame
 
 #define ENTITY_SENTINEL				9999	// for server and client parsing
 
@@ -26,8 +27,17 @@ typedef struct
 	int				num_entities;
 
 	// For each entity handled in the to packet, mark that's it has already been deleted if that's the case
-	unsigned char	flags[MAX_CLIENTS];
+	unsigned char	flags[MAX_PACKET_ENTITIES >> 3];
 	entity_state_t* entities; // heap allocated entities
 } packet_entities_t;
+
+typedef struct
+{
+    int				num_entities;
+
+    // For each entity handled in the to packet, mark that's it has already been deleted if that's the case
+    unsigned char	flags[MAX_PACKET_ENTITIES_HL25 >> 3];
+    entity_state_t* entities; // heap allocated entities
+} packet_entities_hl25_t;
 
 #endif // DELTA_PACKET_H

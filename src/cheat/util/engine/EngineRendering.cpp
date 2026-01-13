@@ -175,7 +175,6 @@ void CEngineFontRendering::render_information()
 	auto local = CLocalState::the().local_player();
 
 	auto pmove = *CMemoryHookMgr::the().pmove().get();
-	auto cl = CMemoryHookMgr::the().cl().get();
 	auto frame = CLocalState::the().get_current_frame();
 	auto clientdata = CLocalState::the().get_current_frame_clientdata();
 
@@ -188,6 +187,20 @@ void CEngineFontRendering::render_information()
 	last_velocity = velocity;
 
 	float movespeed = sqrt((cmd->forwardmove * cmd->forwardmove) + (cmd->sidemove * cmd->sidemove) + (cmd->upmove * cmd->upmove));
+
+    hl::vec3_t prediction_error;
+    int playernum;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        prediction_error = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->prediction_error;
+        playernum = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->playernum;
+    }
+    else
+    {
+        prediction_error = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->prediction_error;
+        playernum = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->playernum;
+    }
 
 	render_debug("Acceleration: {:0.3f} u/frame", rolling_accel);
 	render_debug("Ground distance: {:0.3f} units", gnd_dist);
@@ -216,13 +229,13 @@ void CEngineFontRendering::render_information()
 	render_debug("Movespeed: {}", movespeed);
 	render_debug("Movetype: {}", pmove->movetype);
 	render_debug("Viewangles: {}", cmd->viewangles);
-	render_debug("prediction_error: {}", cl->prediction_error.Length());
+	render_debug("prediction_error: {}", prediction_error.Length());
 	render_debug("Yaw: {} a", cmd->viewangles[YAW]);
 	render_debug("usehull: {}", pmove->usehull);
 	render_debug("iuser1: {}", clientdata->iuser1);
 	render_debug("iuser2: {}", clientdata->iuser2);
 	render_debug("key_dest: {}", (int)*CMemoryHookMgr::the().key_dest().get());
-	render_debug("playernum: {}", cl->playernum);
+	render_debug("playernum: {}", playernum);
 
 	auto va_delta = CLocalState::the().get_viewangle_delta();
 	render_debug("VA delta: {}", va_delta);
@@ -230,7 +243,7 @@ void CEngineFontRendering::render_information()
 
 	render_debug("--- Network ---");
 	static double stable_latency = 0.0, stable_fakel = 0.0;
-	stable_latency = 0.9f * stable_latency + (1.0f - 0.9f) * (frame->latency);
+	stable_latency = 0.9f * stable_latency + (1.0f - 0.9f) * (COxWare::the().is_legacy_build() ? ((hl::frame_t*)frame)->latency : ((hl::frame_hl25_t*)frame)->latency);
 	stable_fakel = 0.9f * stable_fakel + (1.0f - 0.9f) * (CNetchanSequenceHistory::the().get_desired_fake_latency());
 	render_debug("latency: {:0.3f} ms / fake: {:0.3f} ms", stable_latency * 1000.0, stable_fakel * 1000);
 }

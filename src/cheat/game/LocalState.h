@@ -98,7 +98,7 @@ public:
 
 	Vector2D get_viewangle_delta();
 
-	hl::frame_t* get_current_frame();
+	void* get_current_frame();
 
 	// only set when local player object is valid and alive.
 	CGenericPlayer* local_player();
@@ -115,7 +115,7 @@ public:
 	hl::CSteamID get_local_steamid();
 
 private:
-	hl::frame_t* m_current_frame = nullptr;
+	void* m_current_frame = nullptr;
 
 	int m_player_flags = 0;
 	Vector m_moving_velocity;

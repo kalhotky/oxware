@@ -52,7 +52,16 @@ void CNetchanSequenceHistory::update()
 
 	if (incoming_sequence > m_last_incoming)
 	{
-		float realtime = CMemoryHookMgr::the().cl().get()->time;
+		float realtime;
+
+        if (COxWare::the().is_legacy_build())
+        {
+            realtime = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->time;
+        }
+        else
+        {
+            realtime = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->time;
+        }
 
 		m_sequences.emplace_front(incoming_sequence, realtime);
 
@@ -84,7 +93,16 @@ void CNetchanSequenceHistory::generate_fake_latency()
 
 std::optional<netseq_t> CNetchanSequenceHistory::find_sequence_entry()
 {
-	float realtime = CMemoryHookMgr::the().cl().get()->time;
+    float realtime;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        realtime = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->time;
+    }
+    else
+    {
+        realtime = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->time;
+    }
 
 	// point in time to look for
 	float desired_latency = (float)fake_latency_amount.get_value() / 1000.0f;

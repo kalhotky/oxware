@@ -76,10 +76,7 @@ bool CMemoryFnDetourMgr::install_hooks()
     }
 	CreateGasSmoke().install();
 	CEngine__Unload().install();
-    if (COxWare::the().get_build_number() <= 8684) // TODO(kalhotky): implement workaround, hook and move logic to V_UpdatePalette + vid.recalc_refdef check instead
-    {
-        SCR_CalcRefdef().install(); // NOTE(kalhotky): inlined in hl25
-    }
+    V_UpdatePalette().install();
 	SCR_UpdateScreen().install();
 	SPR_Set().install();
 	CGame__AppActivate().install();
@@ -92,19 +89,13 @@ bool CMemoryFnDetourMgr::install_hooks()
 	MSG_WriteUsercmd().install();
 	CHudSniperScope__Draw().install();
 	CL_IsThirdPerson().install();
-    if (COxWare::the().get_build_number() <= 8684) // TODO(kalhotky): implement workaround, hook and move logic to CL_ProcessPacket
-    {
-        CL_ProcessEntityUpdate().install(); // NOTE(kalhotky): inlined in hl25
-    }
+    CL_ProcessPacket().install();
 	HUD_PostRunCmd().install();
 	HUD_CreateEntities().install();
 	HUD_DrawTransparentTriangles().install();
 	MakeSkyVec().install();
 	HUD_Frame().install();
-    if (COxWare::the().get_build_number() <= 8684) // TODO(kalhotky): implement workaround, hook and move logic to R_DrawWorld
-    {
-        R_DrawEntitiesOnList().install(); // NOTE(kalhotky): inlined in hl25
-    }
+    R_DrawWorld().install();
 	R_StudioSetupLighting().install();
 	VGui_ViewportPaintBackground().install();
 #ifdef INTERCEPT_STEAM_LOGGING
@@ -170,10 +161,7 @@ void CMemoryFnDetourMgr::uninstall_hooks()
 		CEngine__Unload().uninstall();
 	}
 
-    if (COxWare::the().get_build_number() <= 8684)
-    {
-        SCR_CalcRefdef().uninstall();
-    }
+    V_UpdatePalette().uninstall();
 	SCR_UpdateScreen().uninstall();
 	SPR_Set().uninstall();
 	CGame__AppActivate().uninstall();
@@ -186,19 +174,13 @@ void CMemoryFnDetourMgr::uninstall_hooks()
 	MSG_WriteUsercmd().uninstall();
 	CHudSniperScope__Draw().uninstall();
 	CL_IsThirdPerson().uninstall();
-    if (COxWare::the().get_build_number() <= 8684)
-    {
-        CL_ProcessEntityUpdate().uninstall();
-    }
+    CL_ProcessPacket().uninstall();
 	HUD_PostRunCmd().uninstall();
 	HUD_CreateEntities().uninstall();
 	HUD_DrawTransparentTriangles().uninstall();
 	MakeSkyVec().uninstall();
 	HUD_Frame().uninstall();
-    if (COxWare::the().get_build_number() <= 8684)
-    {
-        R_DrawEntitiesOnList().uninstall();
-    }
+    R_DrawWorld().uninstall();
 	R_StudioSetupLighting().uninstall();
 	VGui_ViewportPaintBackground().uninstall();
 #ifdef INTERCEPT_STEAM_LOGGING
@@ -866,22 +848,23 @@ void __thiscall CEngine__Unload_FnDetour_t::CEngine__Unload(hl::CEngine* ecx)
 
 //---------------------------------------------------------------------------------
 
-bool SCR_CalcRefdef_FnDetour_t::install()
+bool V_UpdatePalette_FnDetour_t::install()
 {
-	initialize("SCR_CalcRefdef", L"hw.dll");
-	return detour_using_bytepattern((uintptr_t*)SCR_CalcRefdef);
+    initialize("V_UpdatePalette", L"hw.dll");
+    return detour_using_bytepattern((uintptr_t*)V_UpdatePalette);
 }
 
-void SCR_CalcRefdef_FnDetour_t::SCR_CalcRefdef()
+void V_UpdatePalette_FnDetour_t::V_UpdatePalette()
 {
-	// fov gets capped inside this function.
+    CMemoryFnDetourMgr::the().V_UpdatePalette().call();
 
-	if (!CAntiScreen::the().hide_visuals() && !CPanic::the().panicking())
-	{
-		CFieldOfViewChanger::the().scale_fov();
-	}
+    // NOTE(kalhotky): fov gets capped inside SCR_CalcRefdef but that is inlined in hl25 builds, this is the next best option
+    // NOTE(kalhotky): for 1:1 accuracy if (vid.recalc_refdef) { /* do our stuff */ }
 
-	CMemoryFnDetourMgr::the().SCR_CalcRefdef().call();
+    if (!CAntiScreen::the().hide_visuals() && !CPanic::the().panicking())
+    {
+        CFieldOfViewChanger::the().scale_fov();
+    }
 }
 
 //---------------------------------------------------------------------------------
@@ -1193,19 +1176,40 @@ int CL_IsThirdPerson_FnDetour_t::CL_IsThirdPerson()
 
 //---------------------------------------------------------------------------------
 
-bool CL_ProcessEntityUpdate_FnDetour_t::install()
+bool CL_ProcessPacket_FnDetour_t::install()
 {
-	initialize("CL_ProcessEntityUpdate", L"hw.dll");
-	return detour_using_bytepattern((uintptr_t*)CL_ProcessEntityUpdate);
+    initialize("CL_ProcessPacket", L"hw.dll");
+    return detour_using_bytepattern((uintptr_t*)CL_ProcessPacket);
 }
 
-void CL_ProcessEntityUpdate_FnDetour_t::CL_ProcessEntityUpdate(hl::cl_entity_t* ent)
+void CL_ProcessPacket_FnDetour_t::CL_ProcessPacket(void* frame)
 {
-	// called after packet entities are resolved
+    CMemoryFnDetourMgr::the().CL_ProcessPacket().call(frame);
 
-	CMemoryFnDetourMgr::the().CL_ProcessEntityUpdate().call(ent);
+    if (COxWare::the().is_legacy_build())
+    {
+        auto& packet_entities = ((hl::frame_t*)frame)->packet_entities;
 
-	CEntityMgr::the().entity_state_update(ent);
+        for (int i = 0; i < packet_entities.num_entities; i++)
+        {
+            auto state = &packet_entities.entities[i];
+            auto ent = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetEntityByIndex(state->number);
+
+            CEntityMgr::the().entity_state_update(ent);
+        }
+    }
+    else
+    {
+        auto& packet_entities = ((hl::frame_hl25_t*)frame)->packet_entities;
+
+        for (int i = 0; i < packet_entities.num_entities; i++)
+        {
+            auto state = &packet_entities.entities[i];
+            auto ent = CMemoryHookMgr::the().cl_enginefuncs().get()->pfnGetEntityByIndex(state->number);
+
+            CEntityMgr::the().entity_state_update(ent);
+        }
+    }
 }
 
 //---------------------------------------------------------------------------------
@@ -1238,8 +1242,18 @@ void HUD_CreateEntities_FnDetour_t::HUD_CreateEntities()
 
 	CMemoryFnDetourMgr::the().HUD_CreateEntities().call();
 
-	auto cl = CMemoryHookMgr::the().cl().get();
-	for (int i = 0; i < cl->maxclients; i++)
+    int maxclients;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        maxclients = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->maxclients;
+    }
+    else
+    {
+        maxclients = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->maxclients;
+    }
+
+	for (int i = 0; i < maxclients; i++)
 	{
 		CEntityMgr::the().player_info_update(i);
 	}
@@ -1309,22 +1323,27 @@ void HUD_Frame_FnDetour_t::HUD_Frame()
 
 //---------------------------------------------------------------------------------
 
-bool R_DrawEntitiesOnList_FnDetour_t::install()
+bool R_DrawWorld_FnDetour_t::install()
 {
-	initialize("R_DrawEntitiesOnList", L"hw.dll");
-	return detour_using_bytepattern((uintptr_t*)R_DrawEntitiesOnList);
+    initialize("R_DrawWorld", L"hw.dll");
+    return detour_using_bytepattern((uintptr_t*)R_DrawWorld);
 }
 
-void R_DrawEntitiesOnList_FnDetour_t::R_DrawEntitiesOnList()
+void R_DrawWorld_FnDetour_t::R_DrawWorld()
 {
-	// function to process all visents and beams
+    CMemoryFnDetourMgr::the().R_DrawWorld().call();
 
-	if (!CAntiScreen::the().hide_visuals() && !CPanic::the().panicking())
-	{
-		CBacktrack::the().update();
-	}
-	
-	CMemoryFnDetourMgr::the().R_DrawEntitiesOnList().call();
+    // NOTE(kalhotky): previously in R_DrawEntitiesOnList hook but it's inlined in hl25 builds
+
+    static auto r_drawentities = CGoldSrcCommandMgr::the().get_cvar("r_drawentities");
+
+    if (r_drawentities->value != 0.0f)
+    {
+        if (!CAntiScreen::the().hide_visuals() && !CPanic::the().panicking())
+        {
+            CBacktrack::the().update();
+        }
+    }
 }
 
 //---------------------------------------------------------------------------------

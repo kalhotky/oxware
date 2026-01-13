@@ -37,7 +37,17 @@ void CGenericEntity::update(hl::cl_entity_t* ent)
 
 bool CGenericEntity::is_out_of_update_for(float interval) const
 {
-	float t2 = (float)CMemoryHookMgr::the().cl().get()->time;
+	float t2;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        t2 = (float)CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->time;
+    }
+    else
+    {
+        t2 = (float)CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->time;
+    }
+
 	float t1 = m_ent->curstate.msg_time;
 
 	if (t1 == 0.0f)

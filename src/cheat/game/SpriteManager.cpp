@@ -341,7 +341,17 @@ void CSpriteMgr::scale_hud_colors(CColor& color, bool dim)
 
 void CSpriteMgr::render_current_weapon_sprite() const
 {
-	auto vm = &CMemoryHookMgr::the().cl().get()->viewent;
+	hl::cl_entity_t* vm;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        vm = &CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewent;
+    }
+    else
+    {
+        vm = &CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewent;
+    }
+
 	if (!vm->model)
 	{
 		return;

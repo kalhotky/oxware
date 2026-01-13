@@ -415,11 +415,11 @@ struct CEngine__Unload_FnDetour_t final : public GenericMemoryFnDetour_thiscall<
 	static void __thiscall CEngine__Unload(hl::CEngine* ecx);
 };
 
-// void __cdecl SCR_CalcRefdef()
-struct SCR_CalcRefdef_FnDetour_t final : public GenericMemoryFnDetour_cdecl<void>
+// void __cdecl V_UpdatePalette()
+struct V_UpdatePalette_FnDetour_t final : public GenericMemoryFnDetour_cdecl<void>
 {
-	bool install();
-	static void SCR_CalcRefdef();
+    bool install();
+    static void V_UpdatePalette();
 };
 
 // void __cdecl SCR_UpdateScreen()
@@ -506,11 +506,11 @@ struct CL_IsThirdPerson_FnDetour_t final : public GenericMemoryFnDetour_cdecl<in
 	static int CL_IsThirdPerson();
 };
 
-// void __cdecl CL_ProcessEntityUpdate(cl_entity_t *ent)
-struct CL_ProcessEntityUpdate_FnDetour_t final : public GenericMemoryFnDetour_cdecl<void, hl::cl_entity_t*>
+// void __cdecl CL_ProcessPacket(frame_t* frame)
+struct CL_ProcessPacket_FnDetour_t final : public GenericMemoryFnDetour_cdecl<void, void*>
 {
-	bool install();
-	static void CL_ProcessEntityUpdate(hl::cl_entity_t *ent);
+    bool install();
+    static void CL_ProcessPacket(void* frame);
 };
 
 // void HUD_PostRunCmd(local_state_t* from, local_state_t* to, usercmd_t* cmd, int runfuncs, double time, unsigned int random_seed)
@@ -553,6 +553,13 @@ struct R_DrawEntitiesOnList_FnDetour_t final : public GenericMemoryFnDetour_cdec
 {
 	bool install();
 	static void R_DrawEntitiesOnList();
+};
+
+// void R_DrawWorld();
+struct R_DrawWorld_FnDetour_t final : public GenericMemoryFnDetour_cdecl<>
+{
+    bool install();
+    static void R_DrawWorld();
 };
 
 // void R_StudioSetupLighting(alight_t* plighting);
@@ -630,7 +637,7 @@ public:
 	inline auto& CPartSmokeGrenade__Create() { static CPartSmokeGrenade__Create_FnDetour_t fnhook; return fnhook; }
 	inline auto& CreateGasSmoke() { static CreateGasSmoke_FnDetour_t fnhook; return fnhook; }
 	inline auto& CEngine__Unload() { static CEngine__Unload_FnDetour_t fnhook; return fnhook; }
-	inline auto& SCR_CalcRefdef() { static SCR_CalcRefdef_FnDetour_t fnhook; return fnhook; }
+	inline auto& V_UpdatePalette() { static V_UpdatePalette_FnDetour_t fnhook; return fnhook; }
 	inline auto& SCR_UpdateScreen() { static SCR_UpdateScreen_FnDetour_t fnhook; return fnhook; }
 	inline auto& SPR_Set() { static SPR_Set_FnDetour_t fnhook; return fnhook; }
 	inline auto& CGame__AppActivate() { static CGame__AppActivate_FnDetour_t fnhook; return fnhook; }
@@ -643,13 +650,13 @@ public:
 	inline auto& MSG_WriteUsercmd() { static MSG_WriteUsercmd_FnDetour_t fnhook; return fnhook; }
 	inline auto& CHudSniperScope__Draw() { static CHudSniperScope__Draw_FnDetour_t fnhook; return fnhook; }
 	inline auto& CL_IsThirdPerson() { static CL_IsThirdPerson_FnDetour_t fnhook; return fnhook; }
-	inline auto& CL_ProcessEntityUpdate() { static CL_ProcessEntityUpdate_FnDetour_t fnhook; return fnhook; }
+    inline auto& CL_ProcessPacket() { static CL_ProcessPacket_FnDetour_t fnhook; return fnhook; }
 	inline auto& HUD_PostRunCmd() { static HUD_PostRunCmd_FnDetour_t fnhook; return fnhook; }
 	inline auto& HUD_CreateEntities() { static HUD_CreateEntities_FnDetour_t fnhook; return fnhook; }
 	inline auto& HUD_DrawTransparentTriangles() { static HUD_DrawTransparentTriangles_FnDetour_t fnhook; return fnhook; }
 	inline auto& MakeSkyVec() { static MakeSkyVec_FnDetour_t fnhook; return fnhook; }
 	inline auto& HUD_Frame() { static HUD_Frame_FnDetour_t fnhook; return fnhook; }
-	inline auto& R_DrawEntitiesOnList() { static R_DrawEntitiesOnList_FnDetour_t fnhook; return fnhook; }
+	inline auto& R_DrawWorld() { static R_DrawWorld_FnDetour_t fnhook; return fnhook; }
 	inline auto& R_StudioSetupLighting() { static R_StudioSetupLighting_FnDetour_t fnhook; return fnhook; }
 	inline auto& VGui_ViewportPaintBackground() { static VGui_ViewportPaintBackground_FnDetour_t fnhook; return fnhook; }
 #ifdef INTERCEPT_STEAM_LOGGING

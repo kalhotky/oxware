@@ -334,6 +334,39 @@ typedef struct
 	unsigned short	msgbytes;			// Total size of message
 } frame_t;
 
+// Client's now store the command they sent to the server and the 
+// entire results set of that command. 
+typedef struct
+{
+    // Data received from server
+    double			receivedtime;	// Time message from server was received, or -1 (packet was lost)
+    //  receivedtime - senttime = latency.
+    double			latency;
+
+    qboolean		invalid;		// True if the packet_entities delta was invalid for some reason.
+    qboolean		choked;
+
+    entity_state_t	playerstate[MAX_CLIENTS];
+    // Server timestamp
+    double			time;
+
+    clientdata_t	clientdata;
+    weapon_data_t	weapondata[MULTIPLAYER_BACKUP];
+
+    // The packet of entities sent from the server.
+    packet_entities_hl25_t packet_entities;
+
+    unsigned short	clientbytes;		// Client data ( local player only )
+    unsigned short	playerinfobytes;	// # of bytes of message that were occupied by player's data
+    unsigned short	packetentitybytes;	// # of bytes that were occupied by packet entities data.
+    unsigned short	tentitybytes;		// Tempent bytes
+    unsigned short	soundbytes;
+    unsigned short	eventbytes;
+    unsigned short	usrbytes;			// Usermsg bytes
+    unsigned short	voicebytes;
+    unsigned short	msgbytes;			// Total size of message
+} frame_hl25_t;
+
 // cmd_t structure
 #include "client_command.h"
 
@@ -526,5 +559,193 @@ typedef struct
 	// the primary url for resource downloading.
 	char		downloadUrl[128];
 } client_state_t;
+
+// the client_state_t structure is wiped completely at every server 
+// signon
+typedef struct
+{
+	// Set depending on -num_edicts. Calculated inside COM_EntsForPlayerSlots().
+	int			max_edicts;
+
+	resource_t	resourcesonhand;
+	resource_t	resourcesneeded;
+	// Resource download list.
+	resource_t	resourcelist[MAX_RESOURCES];
+	// Amount of resources inside resourcelist.
+	int			num_resources;
+
+	// Set inside CL_ParseConsistencyInfo() and CL_SendConsistencyInfo().
+	// TRUE if the server wants us to parse/send consistency information.
+	qboolean	need_force_consistency_response;
+
+	// Obsolete. Can be set using 'fullserverinfo' console command.
+	char		serverinfo[512];
+
+	// The amount of started servers since .exe launch
+	int			servercount;
+
+	// This is the sequence number of the last good world snapshot/update 
+	// we got. If this is 0, we can't render a frame yet
+	// Set when parsing packet entities.
+	int			validsequence;
+
+	int			parsecount;		// server message counter
+	int			parsecountmod;	// equals to parsecount & CL_UPDATE_MASK
+
+	// information for local display
+	int			stats[MAX_CL_STATS]; // health, etc
+
+	// Filled with clientdata_t::weapons when client data is being parsed.
+	int			weapons;
+
+	// last command sent to the server, obtained by the CreateMove client dll function.
+	usercmd_t	cmd;
+
+	// the client maintains its own idea of view angles, which are
+	// sent to the server each frame. The server sets punchangle when
+	// the view is temporarliy offset, and an angle reset commands at the start
+	// of each level and after teleporting.
+	vec3_t		viewangles;
+	vec3_t		punchangle;
+	vec3_t		crosshairangle; // Set inside CL_Parse_CrosshairAngle(), then added to ref.viewangles
+	
+	//
+	// Prediction data
+	//
+
+	// Simulated origin, velocity & angles on clientside
+	vec3_t		simorg, simvel, simangles;
+	vec3_t		predicted_origins[MULTIPLAYER_BACKUP];
+	// How much error there was when predicting the origin clientside
+	// vs the actual origin acknowledged by the server.
+	vec3_t		prediction_error;
+
+	// pitch drifting vars. Set inside CL_SetIdealPitch().
+	// Affected by cl_idealpitchscale.value
+	float		idealpitch;
+
+	// Origin of clients camera set by the client dll.
+	vec3_t		viewheight;
+
+	screenfade_t sf;
+
+	// TRUE when we're paused. At this point the 'paused' text
+	// is rendered in the center of the screen by Draw_CenterPic()
+	// and audio is not played at all.
+	qboolean	paused;
+
+	int			onground;
+	// TRUE when the delta between current & previous state's X&Y origin is non-null.
+	int			moving;
+	int			waterlevel; // Set by the client dll
+	int			usehull;
+	float		maxspeed;	// Set by the client dll
+	int			pushmsec;	// Set by the client dll
+
+	// light level at player's position including dlights
+	// this is sent back to the server each frame
+	// architectually ugly but it works
+	int			light_level;// Average color of all three RBG colors
+
+	// don't change view angle, full screen, etc
+	int			intermission;
+
+	// timestamps of last two messages. Received by the server when
+	// svc_time is issued every frame.
+	double		mtime[2];
+
+	//
+	// Client time. Updated in CL_ReadPackets().
+	//
+	
+	double		time;		// Client clock
+	double		oldtime;	// Old Client clock
+
+	// These are the frames used to generate client side prediction with. 
+	// The frames also contain the state of all other entities and players, 
+	// so that the visible entities list can be repopulated correctly.
+	frame_hl25_t    frames[MULTIPLAYER_BACKUP];
+	cmd_t		    commands[MULTIPLAYER_BACKUP];
+
+	local_state_t   predicted_frames[MULTIPLAYER_BACKUP];
+
+	// Acknowledged sequence number
+	int			delta_sequence;
+
+	//
+	// information that is static for the entire time connected to a server
+	//
+	int			playernum; // player entity. skips world. Add 1 to get cl_entitites index;
+
+	event_t		event_precache[MAX_EVENTS];
+
+	model_t*	model_precache[MAX_MODELS];
+	int			model_precache_count;
+
+	sfx_t*		sound_precache[MAX_SOUNDS];
+
+	consistency_t consistency_list[MAX_CONSISTENCY];
+	int			num_consistency;
+
+	// Used to track the highest index for baselines
+	int			highentity;
+
+	// for display on solo scoreboard
+	char		levelname[MAX_LEVELNAME];
+	// Received from the server when svc_serverinfo is issued. Tells
+	// How many clients the server accepts.
+	int			maxclients;
+
+	// TRUE when coop.value is 0.f and deathmatch.value isn't 0.f.
+	// Sent by the server when svc_serverinfo is issued.
+	int			gametype;		// deprecated
+
+	// refresh related state
+	int			viewentity;		// cl_entitites[cl.viewentity] == player point of view
+
+	model_t*	worldmodel;		// cl_entitites[0].model
+	efrag_t*	free_efrags;
+	// Number of entities referenced. Incremented each time CL_EntityNum() is called.
+	int			num_entities;	// held in cl_entities array
+	int			num_statics;	// held in cl_staticentities array. Deprecated.
+	// Entity of viewmodel. Processed locally on clientside.
+	cl_entity_t viewent;
+
+	// Set when svc_serverinfo is issued. Both set to gGlobalVariables.cdAudioTrack.
+	int			cdtrack;
+	int			looptrack;
+
+	// To determine if client is playing hacked .map. (entities lump is skipped)
+	// Obtained from the server upon issuing svc_serverinfo message.
+	CRC32_t		serverCRC;
+
+	// Filled when svc_serverinfo is issued. Filled with server's client dll CRC.
+	// Set when svc_serverinfo is issued.
+	byte		clientdllmd5[16];
+
+	// Data related to weapon animation.
+	float		weaponstarttime;
+	int			weaponsequence;
+
+	// For sound precaching. Used inside S_LoadStreamSound().
+	qboolean	fPrecaching;
+
+	// Local player flashlight
+	dlight_t*	pLight;
+
+	// Player information for self and other players.  Used for client side for prediction.
+	player_info_t players[MAX_CLIENTS];
+
+	entity_state_t instanced_baseline[MULTIPLAYER_BACKUP];
+	int			instanced_baseline_number;
+
+	CRC32_t		mapCRC;	// client's map CRC value, CL_CheckCRCs() checks this with cl.serverCRC to make sure
+						// that the client and server play the same map
+	event_state_t events;
+
+	// Server fills this when svc_resourcelocation is issued. Is used as
+	// the primary url for resource downloading.
+	char		downloadUrl[128];
+} client_state_hl25_t;
 
 #endif // CLIENT_H

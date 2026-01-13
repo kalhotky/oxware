@@ -49,7 +49,16 @@ void CWorldVisuals::dim()
 	if (world_visuals_rainbow.get_value())
 	{
 		float speed = (float)1.0f;
-		double tm = CMemoryHookMgr::the().cl().get()->time;
+        double tm;
+
+        if (COxWare::the().is_legacy_build())
+        {
+            tm = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->time;
+        }
+        else
+        {
+            tm = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->time;
+        }
 
 		// all phase-shifted so that it's more cool
 		color.r = std::abs(std::sinf(tm * speed + 0));

@@ -131,14 +131,23 @@ void CMovementFastRun::faster_run()
 	}
 
 	auto pmove = *CMemoryHookMgr::the().pmove().get();
-	auto cl = CMemoryHookMgr::the().cl().get();
+    float cl_viewangles_yaw;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        cl_viewangles_yaw = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewangles[YAW];
+    }
+    else
+    {
+        cl_viewangles_yaw = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewangles[YAW];
+    }
 
 	bool dir_rig = true;
 
 	float vel_yaw = CMath::the().rad2deg(atan2(pmove->velocity.y, pmove->velocity.x));
 
 	vel_yaw -= angle_to_add;
-	vel_yaw = cl->viewangles[YAW] - vel_yaw;
+	vel_yaw = cl_viewangles_yaw - vel_yaw;
 
 	int fadif = (int)vel_yaw;
 

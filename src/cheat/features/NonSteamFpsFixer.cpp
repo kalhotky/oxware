@@ -44,7 +44,6 @@ void CNonSteamFpsFixer::fix_fps()
 
 	static double frametime_remainder = 0.0;
 	double host_frametime = CLocalState::the().get_engine_frametime();
-	auto cl = CMemoryHookMgr::the().cl().get();
 
 	//
 	// mirrors 8684 implementation.. thanks, random guy
@@ -67,6 +66,14 @@ void CNonSteamFpsFixer::fix_fps()
 	if (msec > MAX_COMMAND_DURATION)
 		msec = MAX_COMMAND_DURATION;
 
-	cl->cmd.msec = msec;
+    if (COxWare::the().is_legacy_build())
+    {
+        CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->cmd.msec = msec;
+    }
+    else
+    {
+        CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->cmd.msec = msec;
+    }
+
 	CClientMovementPacket::the().svside_movement_speed_factor(msec);
 }

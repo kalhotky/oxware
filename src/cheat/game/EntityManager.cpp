@@ -45,8 +45,16 @@ void CEntityMgr::entity_state_update(hl::cl_entity_t* ent)
 void CEntityMgr::player_info_update(int index)
 {
 	// see if the player is actually connected on a server
-	auto cl = CMemoryHookMgr::the().cl().get();
-	hl::player_info_t* player_info = &cl->players[index];
+	hl::player_info_t* player_info;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        player_info = &CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->players[index];
+    }
+    else
+    {
+        player_info = &CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->players[index];
+    }
 
 	if (!player_info->name[0])
 	{
@@ -89,18 +97,38 @@ void CEntityMgr::init()
 {
 	CConsole::the().info("Initializing entity and reserving:");
 
-	auto cl = CMemoryHookMgr::the().cl().get();
+    int maxclients, max_edicts;
 
-	m_known_players.reserve(cl->maxclients);
+    if (COxWare::the().is_legacy_build())
+    {
+        maxclients = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->maxclients;
+        max_edicts = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->max_edicts;
+    }
+    else
+    {
+        maxclients = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->maxclients;
+        max_edicts = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->max_edicts;
+    }
+
+	m_known_players.reserve(maxclients);
 	CConsole::the().info("  {} for players.", m_known_players.bucket_count());
 
-	m_known_entities.reserve(cl->max_edicts - m_known_players.bucket_count());
+	m_known_entities.reserve(max_edicts - m_known_players.bucket_count());
 	CConsole::the().info("  {} for entities.", m_known_entities.bucket_count());
 }
 
 std::optional<CGenericPlayer*> CEntityMgr::get_local_player()
 {
-	int local_index = CMemoryHookMgr::the().cl().get()->playernum + 1;
+	int local_index;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        local_index = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->playernum + 1;
+    }
+    else
+    {
+        local_index = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->playernum + 1;
+    }
 
 	try
 	{

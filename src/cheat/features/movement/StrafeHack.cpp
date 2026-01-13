@@ -135,13 +135,22 @@ void CMovementStrafeHack::update()
 	auto pmove = *CMemoryHookMgr::the().pmove().get();
 
 	auto cmd = CClientMovementPacket::the().get_cmd();
-	auto cl = CMemoryHookMgr::the().cl().get();
+    float cl_viewangles_yaw;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        cl_viewangles_yaw = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewangles[YAW];
+    }
+    else
+    {
+        cl_viewangles_yaw = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewangles[YAW];
+    }
 
 	auto vel_3d = pmove->velocity + Vector(1.0f, 1.0f, 0.0f);
 
 	// [-pi, pi], cl->viewangles[YAW] in radians, but based on velocity and adapted to tangens range of values.
 	float va_vel_tangens = atanf(vel_3d.y / vel_3d.x);
-	float yaw_rad = CMath::the().deg2rad(cl->viewangles[YAW]); // yaw in radians
+	float yaw_rad = CMath::the().deg2rad(cl_viewangles_yaw); // yaw in radians
 
 	float adif = va_vel_tangens - yaw_rad - current_dir->angle_rad;
 
@@ -226,17 +235,27 @@ void CMovementStrafeHack::render_debug()
 {
 	CEngineFontRendering::the().render_debug("--- Strafe ---");
 
-	auto cl = CMemoryHookMgr::the().cl().get();
+    float cl_viewangles_yaw;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        cl_viewangles_yaw = CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewangles[YAW];
+    }
+    else
+    {
+        cl_viewangles_yaw = CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewangles[YAW];
+    }
+
 	auto pmove = *CMemoryHookMgr::the().pmove().get();
 	float va_speed = atan2(pmove->velocity.y, pmove->velocity.x);
-	CEngineFontRendering::the().render_debug("va_speed: {} / {}", va_speed, CMath::the().deg2rad(cl->viewangles[YAW]));
+	CEngineFontRendering::the().render_debug("va_speed: {} / {}", va_speed, CMath::the().deg2rad(cl_viewangles_yaw));
 
 	auto vel_3d = pmove->velocity + Vector(1.0f, 1.0f, 0.0f);
 	auto vel_2d = CLocalState::the().get_local_velocity_2d();
 
-	// [-pi, pi], cl->viewangles[YAW] in radians, but based on velocity and adapted to tangens range of values.
+	// [-pi, pi], cl_viewangles_yaw in radians, but based on velocity and adapted to tangens range of values.
 	float va_vel_tangens = atanf(vel_3d.y / vel_3d.x);
-	float yaw_rad = CMath::the().deg2rad(cl->viewangles[YAW]); // yaw in radians
+	float yaw_rad = CMath::the().deg2rad(cl_viewangles_yaw); // yaw in radians
 
 	float adif = va_vel_tangens - yaw_rad - s_direction_data[DIR_FORWARD].angle_rad;
 	CEngineFontRendering::the().render_debug("adif: {}", CMath::the().rad2deg(adif));

@@ -61,7 +61,7 @@ public:
 	int get_index_safe() const { return m_playerinfo_index; }
 
 	// returns "eye position"
-	Vector get_eye_pos() const { return m_ent->origin + CMemoryHookMgr::the().cl().get()->viewheight; }
+	Vector get_eye_pos() const { return m_ent->origin + (COxWare::the().is_legacy_build() ? CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewheight : CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewheight); }
 
 	Vector get_default_bounding_box_min() const { return Vector(-16.0f, -16.0f, -18.0f); }
 	Vector get_default_bounding_box_max() const { return Vector(16.0f, 16.0f, 18.0f); }

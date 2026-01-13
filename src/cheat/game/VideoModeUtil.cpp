@@ -32,12 +32,14 @@ void CVideoModeUtil::initialize()
 {
 	// following information gets changed only on game restart.
 
-	auto ivideomode = *CMemoryHookMgr::the().IVideoMode().get();
-
-	auto mode = ivideomode->GetCurrentMode();
-	assert(mode && "This shouldn't happen");
-
-	m_is_fullscreen = !ivideomode->IsWindowedMode();
+    if (COxWare::the().is_legacy_build())
+    {
+        m_is_fullscreen = !(*CMemoryHookMgr::the().IVideoMode().get<BuildCompat::legacy>())->IsWindowedMode();
+    }
+    else
+    {
+        m_is_fullscreen = !(*CMemoryHookMgr::the().IVideoMode().get<BuildCompat::hl25>())->IsWindowedMode();
+    }
 
 	recompute();
 
@@ -65,10 +67,18 @@ void CVideoModeUtil::recompute()
 {
 	// following information can be changed at runtime.
 
-	auto ivideomode = *CMemoryHookMgr::the().IVideoMode().get();
+    hl::vmode_t* mode;
 
-	auto mode = ivideomode->GetCurrentMode();
-	assert(mode && "This shouldn't happen");
+    if (COxWare::the().is_legacy_build())
+    {
+        mode = (*CMemoryHookMgr::the().IVideoMode().get<BuildCompat::legacy>())->GetCurrentMode();
+    }
+    else
+    {
+        mode = (*CMemoryHookMgr::the().IVideoMode().get<BuildCompat::hl25>())->GetCurrentMode();
+    }
+
+    assert(mode && "This shouldn't happen");
 
 	// get window size
 	m_full_screen_size = get_window_rect();

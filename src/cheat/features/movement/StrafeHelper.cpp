@@ -122,7 +122,6 @@ void CMovementStrafeHelper::update()
 	}
 
 	auto cmd = CClientMovementPacket::the().get_cmd();
-	auto cl = CMemoryHookMgr::the().cl().get();
 
 	float x = CLocalState::the().get_viewangle_delta().x;
 	if (x > 0)
@@ -198,12 +197,21 @@ void CMovementStrafeHelper::render_debug()
 void CMovementStrafeHelper::correction()
 {
 	auto cmd = CClientMovementPacket::the().get_cmd();
-	auto cl = CMemoryHookMgr::the().cl().get();
+    hl::vec3_t* cl_viewangles;
+
+    if (COxWare::the().is_legacy_build())
+    {
+        cl_viewangles = &CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->viewangles;
+    }
+    else
+    {
+        cl_viewangles = &CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->viewangles;
+    }
 
 	float acc = movement_strafe_helper_accumulation.get_value();
 	if (acc && (m_mouse_direction == LEFT || m_mouse_direction == RIGHT))
 	{
-		cl->viewangles[YAW] += (m_mouse_direction == LEFT) ? acc : -acc;
+		(*cl_viewangles)[YAW] += (m_mouse_direction == LEFT) ? acc : -acc;
 		cmd->viewangles[YAW] += (m_mouse_direction == LEFT) ? acc : -acc;
 	}
 }

@@ -60,19 +60,26 @@ void CFlashbangFadeModifier::initialize_gui()
 
 float CFlashbangFadeModifier::fade_percentage()
 {
-	auto& sf = CMemoryHookMgr::the().cl().get()->sf;
-
 	float fadea = (float)m_current_fade_alpha / 255.0f;
 	return (fadea / 1.0f) * 100;
 }
 
 void CFlashbangFadeModifier::set_fade_color(const CColor& clr)
 {
-	auto& sf = CMemoryHookMgr::the().cl().get()->sf;
+    hl::screenfade_t* sf;
 
-	sf.fader = (uint8_t)(clr.r * 255.0f);
-	sf.fadeg = (uint8_t)(clr.g * 255.0f);
-	sf.fadeb = (uint8_t)(clr.b * 255.0f);
+    if (COxWare::the().is_legacy_build())
+    {
+        sf = &CMemoryHookMgr::the().cl().get<BuildCompat::legacy>()->sf;
+    }
+    else
+    {
+        sf = &CMemoryHookMgr::the().cl().get<BuildCompat::hl25>()->sf;
+    }
+
+	sf->fader = (uint8_t)(clr.r * 255.0f);
+	sf->fadeg = (uint8_t)(clr.g * 255.0f);
+	sf->fadeb = (uint8_t)(clr.b * 255.0f);
 }
 
 void CFlashbangFadeModifier::on_render()
