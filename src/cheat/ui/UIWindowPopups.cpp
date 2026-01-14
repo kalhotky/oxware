@@ -260,9 +260,9 @@ void CUIWindowPopups::create_welcome_popup()
 			g_gui_widgets_i->add_bullet_text("And more!");
 
 			g_gui_widgets_i->add_spacing();
-			if (g_gui_widgets_i->add_url_text("github.com/oxiKKK/oxware"))
+			if (g_gui_widgets_i->add_url_text("github.com/kalhotky/oxware")) // github.com/oxiKKK/oxware
 			{
-				CGenericUtil::the().open_link_inside_browser("https://github.com/oxiKKK/oxware");
+				CGenericUtil::the().open_link_inside_browser("https://github.com/kalhotky/oxware"); // https://github.com/oxiKKK/oxware
 			}
 
 			g_gui_widgets_i->add_padding({ 0.0f, sections_padding });
@@ -273,9 +273,9 @@ void CUIWindowPopups::create_welcome_popup()
 			g_gui_widgets_i->add_padding({ 0.0f, sections_padding });
 			g_gui_widgets_i->add_separtor_with_text("Bugs / feature requests");
 			g_gui_widgets_i->add_text("🐞 If you find any bugs or you just want something to be added, please, create an issue here:", TEXTPROP_Wrapped);
-			if (g_gui_widgets_i->add_url_text("github.com/oxiKKK/oxware/issues"))
+			if (g_gui_widgets_i->add_url_text("github.com/kalhotky/oxware/issues")) // github.com/oxiKKK/oxware/issues
 			{
-				CGenericUtil::the().open_link_inside_browser("https://github.com/oxiKKK/oxware/issues");
+				CGenericUtil::the().open_link_inside_browser("https://github.com/kalhotky/oxware/issues"); // https://github.com/oxiKKK/oxware/issues
 			}
 
 			g_gui_widgets_i->add_text("Please, note that I develop this hack based on community suggestions and recommendations, so feel free to contact me about anything you want!", TEXTPROP_Wrapped);

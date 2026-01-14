@@ -841,7 +841,7 @@ void CUIMenu::render_github_repo_link_decor()
 
 	auto link_font = g_gui_fontmgr_i->get_font(FID_SegoeUI, FSZ_16px, FDC_Regular);
 
-	const char* lnk_label = "www.github.com/oxiKKK/oxware";
+	const char* lnk_label = "www.github.com/kalhotky/oxware"; // www.github.com/oxiKKK/oxware
 	auto label_size = g_gui_fontmgr_i->calc_font_text_size(link_font, lnk_label);
 
 	g_gui_widgets_i->set_next_window_pos({ screen_size.x - label_size.x - 6.0f, screen_size.y - label_size.y }, ImGuiCond_Always);
