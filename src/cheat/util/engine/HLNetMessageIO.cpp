@@ -50,10 +50,8 @@ bool CHLNetMessageIO::install_hooks()
 	MSG_WriteBitData().install();
 
 	// reading
-	MSG_ReadChar().install();
 	MSG_ReadByte().install();
 	MSG_ReadShort().install();
-	MSG_ReadWord().install();
 	MSG_ReadLong().install();
 	MSG_ReadFloat().install();
 	MSG_ReadString().install();
@@ -370,12 +368,6 @@ bool MSG_WriteBitDataFnHook_t::install()
 
 //----------------------------------------------------------------------
 
-bool MSG_ReadCharFnHook_t::install()
-{
-	initialize("MSG_ReadChar", L"hw.dll");
-	return install_using_bytepattern(0);
-}
-
 bool MSG_ReadByteFnHook_t::install()
 {
 	initialize("MSG_ReadByte", L"hw.dll");
@@ -385,12 +377,6 @@ bool MSG_ReadByteFnHook_t::install()
 bool MSG_ReadShortFnHook_t::install()
 {
 	initialize("MSG_ReadShort", L"hw.dll");
-	return install_using_bytepattern(0);
-}
-
-bool MSG_ReadWordFnHook_t::install()
-{
-	initialize("MSG_ReadWord", L"hw.dll");
 	return install_using_bytepattern(0);
 }
 

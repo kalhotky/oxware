@@ -697,7 +697,7 @@ int V_FadeAlpha_FnDetour_t::V_FadeAlpha()
 bool V_ApplyShake_FnDetour_t::install()
 {
 	initialize("V_ApplyShake", L"hw.dll");
-	return detour_using_bytepattern((uintptr_t*)V_ApplyShake);
+    return detour_using_memory_address((uintptr_t*)V_ApplyShake, (uintptr_t*)CMemoryHookMgr::the().cl_enginefuncs().get()->pfnV_ApplyShake);
 }
 
 void V_ApplyShake_FnDetour_t::V_ApplyShake(float* origin, float* angles, float factor)

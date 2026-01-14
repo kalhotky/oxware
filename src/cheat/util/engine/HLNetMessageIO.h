@@ -69,17 +69,11 @@ struct MSG_WriteBitDataFnHook_t final : public GenericMemoryFnHook_cdecl<void, v
 //---------------------------------------------------------------------------
 // reading
 
-// int __cdecl MSG_ReadChar();
-struct MSG_ReadCharFnHook_t final : public GenericMemoryFnHook_cdecl<int> { bool install() override; };
-
 // int __cdecl MSG_ReadByte();
 struct MSG_ReadByteFnHook_t final : public GenericMemoryFnHook_cdecl<int> { bool install() override; };
 
 // int __cdecl MSG_ReadShort();
 struct MSG_ReadShortFnHook_t final : public GenericMemoryFnHook_cdecl<int> { bool install() override; };
-
-// int __cdecl MSG_ReadWord();
-struct MSG_ReadWordFnHook_t final : public GenericMemoryFnHook_cdecl<int> { bool install() override; };
 
 // int __cdecl MSG_ReadLong();
 struct MSG_ReadLongFnHook_t final : public GenericMemoryFnHook_cdecl<int> { bool install() override; };
