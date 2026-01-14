@@ -38,9 +38,9 @@
 // for the list of changes, see https://github.com/oxiKKK/oxware/blob/main/changelog.md
 
 #define OXVER_MAJOR		1
-#define OXVER_MINOR		0
-#define OXVER_PATCH		6
-#define OXVER_STRING	"1.0.6" // don't forget to change, too!
+#define OXVER_MINOR		1
+#define OXVER_PATCH		0
+#define OXVER_STRING	"1.1.0" // don't forget to change, too!
 
 #if defined(_DEBUG)
 #define OX_BUILD "debug"
