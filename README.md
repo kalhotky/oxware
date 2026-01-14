@@ -65,6 +65,7 @@ While making this cheat cross-platform (e.g. porting to Linux or OSX) isn't comp
 
 This cheat currently supports following builds:
 
+- `10210 steam version`
 - `8684 steam version`
 - `4554 non-steam version`
 - `3266 non-steam version`

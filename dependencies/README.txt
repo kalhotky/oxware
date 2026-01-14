@@ -7,3 +7,6 @@ After the cheat has been injected, press INSERT as the menu key. Have FUN!
 
 For more information, visit our github page:
 https://github.com/oxiKKK/oxware
+
+This is a fork, github page:
+https://github.com/kalhotky/oxware
