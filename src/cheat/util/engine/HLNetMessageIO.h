@@ -90,17 +90,11 @@ struct MSG_ReadCoordFnHook_t final : public GenericMemoryFnHook_cdecl<float, hl:
 //---------------------------------------------------------------------------
 // writing
 
-// void __cdecl MSG_WriteChar(sizebuf_t *sb, int c);
-struct MSG_WriteCharFnHook_t final : public GenericMemoryFnHook_cdecl<void, hl::sizebuf_t*, int> { bool install() override; };
-
 // void __cdecl MSG_WriteByte(sizebuf_t *sb, int c);
 struct MSG_WriteByteFnHook_t final : public GenericMemoryFnHook_cdecl<void, hl::sizebuf_t*, int> { bool install() override; };
 
 // void __cdecl MSG_WriteShort(sizebuf_t *sb, int c);
 struct MSG_WriteShortFnHook_t final : public GenericMemoryFnHook_cdecl<void, hl::sizebuf_t*, int> { bool install() override; };
-
-// void __cdecl MSG_WriteWord(sizebuf_t *sb, int c);
-struct MSG_WriteWordFnHook_t final : public GenericMemoryFnHook_cdecl<void, hl::sizebuf_t*, int> { bool install() override; };
 
 // void __cdecl MSG_WriteLong(sizebuf_t *sb, int c);
 struct MSG_WriteLongFnHook_t final : public GenericMemoryFnHook_cdecl<void, hl::sizebuf_t*, int> { bool install() override; };
@@ -238,20 +232,16 @@ private:
 	inline auto& MSG_WriteBitData() { static MSG_WriteBitDataFnHook_t hook; return hook; }
 
 	// reading
-	inline auto& MSG_ReadChar() { static MSG_ReadCharFnHook_t hook; return hook; }
 	inline auto& MSG_ReadByte() { static MSG_ReadByteFnHook_t hook; return hook; }
 	inline auto& MSG_ReadShort() { static MSG_ReadShortFnHook_t hook; return hook; }
-	inline auto& MSG_ReadWord() { static MSG_ReadWordFnHook_t hook; return hook; }
 	inline auto& MSG_ReadLong() { static MSG_ReadLongFnHook_t hook; return hook; }
 	inline auto& MSG_ReadFloat() { static MSG_ReadFloatFnHook_t hook; return hook; }
 	inline auto& MSG_ReadString() { static MSG_ReadStringFnHook_t hook; return hook; }
 	inline auto& MSG_ReadCoord() { static MSG_ReadCoordFnHook_t hook; return hook; }
 
 	// writing
-	inline auto& MSG_WriteChar() { static MSG_WriteCharFnHook_t hook; return hook; }
 	inline auto& MSG_WriteByte() { static MSG_WriteByteFnHook_t hook; return hook; }
 	inline auto& MSG_WriteShort() { static MSG_WriteShortFnHook_t hook; return hook; }
-	inline auto& MSG_WriteWord() { static MSG_WriteWordFnHook_t hook; return hook; }
 	inline auto& MSG_WriteLong() { static MSG_WriteLongFnHook_t hook; return hook; }
 	inline auto& MSG_WriteFloat() { static MSG_WriteFloatFnHook_t hook; return hook; }
 	inline auto& MSG_WriteString() { static MSG_WriteStringFnHook_t hook; return hook; }

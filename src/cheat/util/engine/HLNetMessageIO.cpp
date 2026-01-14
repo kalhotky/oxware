@@ -58,10 +58,8 @@ bool CHLNetMessageIO::install_hooks()
 	MSG_ReadCoord().install();
 
 	// writing
-	MSG_WriteChar().install();
 	MSG_WriteByte().install();
 	MSG_WriteShort().install();
-	MSG_WriteWord().install();
 	MSG_WriteLong().install();
 	MSG_WriteFloat().install();
 	MSG_WriteString().install();
@@ -170,7 +168,7 @@ void CHLNetMessageIO::end_silent_reading_no_restore()
 
 int8_t CHLNetMessageIO::read_int8()
 {
-	return MSG_ReadChar().call();
+	return MSG_ReadByte().call();
 }
 
 uint8_t CHLNetMessageIO::read_uint8()
@@ -185,7 +183,7 @@ int16_t CHLNetMessageIO::read_int16()
 
 uint16_t CHLNetMessageIO::read_uint16()
 {
-	return MSG_ReadWord().call();
+	return MSG_ReadShort().call();
 }
 
 int32_t CHLNetMessageIO::read_int32()
@@ -259,7 +257,7 @@ void CHLNetMessageIO::write_buf(int iSize, void* buf)
 
 void CHLNetMessageIO::write_char(hl::sizebuf_t* sb, int8_t i8)
 {
-	MSG_WriteChar().call(sb, i8);
+	MSG_WriteByte().call(sb, i8);
 }
 
 void CHLNetMessageIO::write_byte(hl::sizebuf_t* sb, uint8_t ui8)
@@ -274,7 +272,7 @@ void CHLNetMessageIO::write_short(hl::sizebuf_t* sb, int16_t i16)
 
 void CHLNetMessageIO::write_word(hl::sizebuf_t* sb, uint16_t ui16)
 {
-	MSG_WriteWord().call(sb, ui16);
+	MSG_WriteShort().call(sb, ui16);
 }
 
 void CHLNetMessageIO::write_long(hl::sizebuf_t* sb, int32_t i32)
@@ -406,12 +404,6 @@ bool MSG_ReadCoordFnHook_t::install()
 
 //----------------------------------------------------------------------
 
-bool MSG_WriteCharFnHook_t::install()
-{
-	initialize("MSG_WriteChar", L"hw.dll");
-	return install_using_bytepattern(0);
-}
-
 bool MSG_WriteByteFnHook_t::install()
 {
 	initialize("MSG_WriteByte", L"hw.dll");
@@ -421,12 +413,6 @@ bool MSG_WriteByteFnHook_t::install()
 bool MSG_WriteShortFnHook_t::install()
 {
 	initialize("MSG_WriteShort", L"hw.dll");
-	return install_using_bytepattern(0);
-}
-
-bool MSG_WriteWordFnHook_t::install()
-{
-	initialize("MSG_WriteWord", L"hw.dll");
 	return install_using_bytepattern(0);
 }
 
